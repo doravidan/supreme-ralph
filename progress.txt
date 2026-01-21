@@ -1,0 +1,721 @@
+# Progress Log - ralph/comprehensive-refactoring
+
+## Codebase Patterns
+
+### Import Pattern for Config
+All utility files should import config at the top:
+```javascript
+import { CONFIG } from './config-manager.js';
+```
+
+### Environment Variable Override Pattern
+Config values support env var overrides via the `getEnv()` helper:
+```javascript
+threshold: getEnv('COMPACT_THRESHOLD', 70)
+```
+
+### Config Access Pattern
+Access nested config values:
+```javascript
+CONFIG.news.cacheTtl
+CONFIG.compact.threshold
+CONFIG.timeouts.rssFeed
+```
+
+---
+
+## Iteration 1 - US-001: Create Centralized Configuration Manager
+
+### Completed
+- Created `scripts/utils/config-manager.js` with:
+  - All hardcoded constants extracted and categorized
+  - Environment variable overrides for every config value
+  - Validation function that runs on module load
+  - Helper functions: `getConfig()`, `getFlatConfig()`, `printConfig()`
+
+### Files Updated
+- `scripts/utils/news-aggregator.js` - Uses CONFIG for cache TTL, timeouts, API limits, similarity threshold
+- `scripts/utils/news-fetcher.js` - Uses CONFIG for cache TTL
+- `scripts/utils/project-analyzer.js` - Uses CONFIG for scan depths
+- `scripts/run-ralph.js` - Uses CONFIG for default iterations
+- `scripts/setup-project.js` - Uses CONFIG for hook timeouts, compact threshold
+
+### Config Categories
+1. **compact** - Context management (threshold, tokens, cooldown)
+2. **ralph** - RALPH agent settings (defaultMaxIterations)
+3. **timeouts** - Various timeout values (rssFeed, docFetch, hooks)
+4. **news** - News aggregation (cacheTtl, limits, API settings, sections)
+5. **analysis** - Project analysis (scan depths, dependency limits)
+6. **updates** - Diff checker settings
+7. **http** - HTTP client defaults
+
+### Status: COMPLETE
+
+---
+
+## Iteration 2 - US-002: Create FileSystem Helper Utility
+
+### Completed
+- Created `scripts/utils/fs-helper.js` with:
+  - `readDirRecursive(path, options)` - Recursive directory reading with filtering
+  - `ensureDirs(paths[])` - Batch directory creation
+  - `findFilesByPattern(dir, pattern, options)` - Pattern matching with caching
+  - `safeReadJson(path, defaultValue)` - Safe JSON reading with fallback
+  - `safeReadFile(path, defaultValue)` - Safe file reading with fallback
+  - `safeWriteFile(path, content)` - Auto-creates directories
+  - `safeWriteJson(path, data, options)` - JSON with auto-create
+  - `exists(path)`, `isDirectory(path)`, `isFile(path)` - Path checks
+  - `getExtension(filePath)` - Extension extraction
+  - `copyByPattern(src, dest, pattern)` - Pattern-based copying
+  - `getDirectorySize(path)` - Recursive size calculation
+  - `formatBytes(bytes)` - Human-readable size formatting
+  - `clearCache()` - Cache invalidation
+
+### Caching System
+- In-memory cache for directory listings
+- Cache key: `${path}:${pattern}:${maxDepth}`
+- Cache validation via mtime comparison
+
+### Files Updated
+- `scripts/utils/project-analyzer.js` - Imports fs-helper functions
+- `scripts/setup-project.js` - Imports ensureDirs, safeWriteFile, safeWriteJson
+
+### Status: COMPLETE
+
+---
+
+## Iteration 3 - US-003: Create Template Engine Class
+
+### Completed
+- Created `scripts/utils/template-engine.js` with:
+  - `TemplateEngine` class with configurable options (strictMode, warnOnMissing)
+  - `{{variable}}` and `{{nested.path}}` placeholder syntax
+  - `{{#if condition}}...{{else}}...{{/if}}` conditionals
+  - `{{#each items}}...{{/each}}` loops with @index, @first, @last
+  - `validate(template)` - Returns required variables, conditionals, loops, errors
+  - `render(template, context)` - Main rendering function
+  - Default export with convenience functions
+
+### Template Syntax
+```javascript
+// Variables
+{{name}}
+{{user.profile.name}}
+
+// Conditionals
+{{#if isAdmin}}Admin content{{else}}User content{{/if}}
+
+// Loops
+{{#each items}}
+  Item {{@index}}: {{this}}
+{{/each}}
+```
+
+### Files Updated
+- `scripts/utils/template-generator.js` - Uses new template engine via `applyVariables()`
+- `scripts/run-ralph.js` - Uses `renderTemplate()` for CLAUDE.md generation
+
+### Backward Compatibility
+- `applyVariables()` in template-generator.js now uses template-engine internally
+- `{{#unless}}` syntax converted to negated `{{#if}}` for compatibility
+
+### Status: COMPLETE
+
+---
+
+## Iteration 4 - US-004: Extract Analyzer Registry
+
+### Completed
+- Created `scripts/data/` directory with modular data files:
+  - `dependency-purposes.js` - 300+ package descriptions organized by category
+  - `test-frameworks.js` - 15 test framework configs with packages, config files, locations
+  - `linting-tools.js` - 20 linting/formatting tools with detection patterns
+  - `build-tools.js` - 25 build tools and bundlers with commands
+
+### Data File Structure
+Each data file exports:
+1. Main registry constant (e.g., `DEPENDENCY_PURPOSES`)
+2. Helper functions for detection and lookup
+3. Documentation for extending
+
+### Example: Adding a New Framework
+```javascript
+// In test-frameworks.js
+export const TEST_FRAMEWORKS = {
+  newFramework: {
+    name: 'New Framework',
+    packages: ['new-framework'],
+    configFiles: ['new-framework.config.js'],
+    locations: ['tests'],
+    runCommand: 'npx new-framework test'
+  }
+};
+```
+
+### Files Updated
+- `scripts/utils/project-analyzer.js` - Imports registries from data files
+- Renamed local `detectTestFramework()` to `detectProjectTestFramework()` to avoid conflict
+
+### Status: COMPLETE
+
+---
+
+## Iteration 5 - US-005: Refactor setup-project.js - Split Main Function
+
+### Completed
+- Created `scripts/setup/phases.js` with phase functions extracted from main():
+  - `validateSetupEnvironment(targetPath, options)` - Check permissions, target dir
+  - `checkKnowledgeBaseUpdates(updateInfo, options)` - Handle KB update notifications
+  - `runProjectAnalysis(targetPath)` - Deep project analysis phase
+  - `generateProjectSpec(targetPath, analysis)` - Create PROJECT_SPEC.md
+  - `finalizeSetup(targetPath, config)` - Mark project and register
+  - `displaySetupSummary(config, analysis, registration)` - Show created files
+  - `displayNextSteps(config, analysis)` - Show guidance
+
+### Files Updated
+- `scripts/setup-project.js` - Imports and uses phase functions
+- Removed duplicate `checkForUpdates()`, `runProjectAnalysis()`, `writeProjectSpecFile()` functions
+
+### Pattern: Phase-Based Setup
+Each phase is now a separate, testable function:
+```javascript
+import {
+  validateSetupEnvironment,
+  checkKnowledgeBaseUpdates,
+  runProjectAnalysis,
+  generateProjectSpec,
+  finalizeSetup,
+  displaySetupSummary,
+  displayNextSteps
+} from './setup/phases.js';
+```
+
+### Status: COMPLETE
+
+---
+
+## Iteration 6 - US-006: Refactor setup-project.js - Extract Template Writers
+
+### Completed
+- Created `scripts/setup/template-writer.js` with:
+  - `TEMPLATE_TYPES` configuration object mapping types to generators
+  - `buildTemplateVariables(type, config)` - Build variables for each type
+  - `writeTemplates(type, targetDir, config, items)` - Generic template writing
+  - `writeRules(claudeDir, config, rules)` - Convenience function
+  - `writeCommands(claudeDir, config, commands)` - Convenience function
+  - `writeAgents(claudeDir, config, agents)` - Convenience function
+  - `writeSkills(claudeDir, config, skills)` - Convenience function
+  - `getAvailableTypes()` and `getDefaultItems(type)` - Utility functions
+
+### Files Updated
+- `scripts/setup-project.js` - Imports template writer functions, removed duplicate functions
+
+### Pattern: Template Type Configuration
+```javascript
+const TEMPLATE_TYPES = {
+  rules: {
+    generator: generateRule,
+    outputPattern: (name) => `${name}.md`,
+    displayName: 'rules',
+    defaultItems: ['code-style', 'security', 'testing', 'documentation']
+  },
+  // ... other types
+};
+```
+
+### Status: COMPLETE
+
+---
+
+## Iteration 7 - US-007: Refactor setup-project.js - Extract RALPH Setup
+
+### Completed
+- Created `scripts/setup/ralph-setup.js` with RALPH setup logic:
+  - `buildRalphContext(config, analysis)` - Extract project context for templates
+  - `generateRalphClaudeMd(template, context)` - Render CLAUDE.md template
+  - `writeRalphFiles(targetPath, config, analysis)` - Write ralph.sh, CLAUDE.md, example
+  - `setupRalphSkills(targetPath)` - Install prd, ralph, ralph-run skills
+  - `writeRalphCommand(targetPath)` - Add .claude/commands/ralph.md
+  - `generateBasicPrd(featureDescription, config)` - Fallback PRD generator
+  - `writeInitialPrd(targetPath, config, analysis)` - Write prd.json and progress.txt
+  - `writeRalph(targetPath, config, analysis)` - Main orchestration function
+
+### Files Updated
+- `scripts/setup-project.js` - Imports writeRalph, writeInitialPrd from ralph-setup.js
+- Removed orphaned code: old writeRalph, writeInitialPrd functions
+
+### Pattern: Context Building for Templates
+```javascript
+export function buildRalphContext(config, analysis = null) {
+  const context = {
+    language: config.language || 'typescript',
+    testFramework: 'unknown',
+    // ... build from analysis if available
+  };
+  if (analysis) {
+    context.language = analysis.techStack.language;
+    // ... populate from analysis
+  }
+  return context;
+}
+```
+
+### Status: COMPLETE
+
+---
+
+## Iteration 8 - US-008: Refactor project-analyzer.js - Add Caching
+
+### Completed
+- Added comprehensive caching layer to `scripts/utils/project-analyzer.js`:
+  - `analysisCache` - Caches full `analyzeProject()` results
+  - `markdownCache` - Caches `findMarkdownFiles()` results per directory
+  - `directoryPurposeCache` - Caches `detectDirectoryPurpose()` results
+  - `clearCache()` - Clears all caches for forced refresh
+  - `clearCacheForPath(path)` - Clears cache for specific path and sub-paths
+  - `getCacheStats()` - Returns cache statistics for debugging
+
+### Cache Validation
+- Uses directory modification time (mtime) for cache invalidation
+- Cache is invalidated if directory has been modified since caching
+- `analyzeProject()` now accepts `options.forceRefresh` to bypass cache
+
+### Pattern: Mtime-Based Cache Validation
+```javascript
+async function isCacheValid(cached, targetPath) {
+  if (!cached) return false;
+  const currentMtime = await getDirMtime(targetPath);
+  if (currentMtime === 0) return false;
+  return cached.mtime >= currentMtime;
+}
+```
+
+### Files Updated
+- `scripts/utils/project-analyzer.js` - Added caching layer, updated exports
+
+### Status: COMPLETE
+
+---
+
+## Iteration 9 - US-009: Refactor project-analyzer.js - Fix Silent Error Handling
+
+### Completed
+- Created `scripts/utils/logger.js` with:
+  - `Logger` class with configurable levels (debug, info, warn, error, silent)
+  - In-memory log storage for later retrieval
+  - `getWarnings()` and `getErrors()` methods for collecting issues
+  - Pre-configured loggers: `analyzerLogger`, `setupLogger`, `ralphLogger`, `newsLogger`
+  - Environment variable control: `DEBUG=1` or `LOG_LEVEL=debug`
+
+### Error Handling Improvements
+- Replaced 20+ silent `catch (e) { // Ignore }` blocks with proper logging
+- `logger.debug()` for expected failures (parse errors, missing files)
+- `logger.warn()` for unexpected issues that should be investigated
+- Analysis result now includes `warnings[]` and `errors[]` arrays
+
+### Pattern: Non-Silent Error Handling
+```javascript
+// Before
+} catch (e) {
+  // Ignore errors
+}
+
+// After
+} catch (e) {
+  logger.debug(`Failed to parse package.json: ${e.message}`, { path: packageJsonPath });
+}
+```
+
+### Files Created
+- `scripts/utils/logger.js` - Debug logging utility
+
+### Files Updated
+- `scripts/utils/project-analyzer.js` - Added logger import, replaced silent catches
+
+### Status: COMPLETE
+
+---
+
+## Iteration 10 - US-010: Refactor news-aggregator.js - Replace Regex XML Parsing
+
+### Completed
+- Added `fast-xml-parser` dependency to package.json
+- Rewrote `parseRSSFeed()` to use XMLParser instead of regex
+- Added helper functions:
+  - `parseRSSItem(item)` - Parse RSS 2.0 item
+  - `parseAtomEntry(entry)` - Parse Atom entry with link handling
+  - `extractText(value)` - Extract text from various XML structures
+
+### Feed Format Support
+- RSS 2.0 (`<rss><channel><item>`)
+- Atom (`<feed><entry>`)
+- RDF/RSS 1.0 (`<rdf:RDF><item>`)
+- Proper CDATA and entity handling
+
+### Error Handling
+- Malformed XML logged with warning
+- Timeout errors properly handled
+- Unknown feed formats logged at debug level
+
+### Files Updated
+- `package.json` - Added fast-xml-parser dependency
+- `scripts/utils/news-aggregator.js` - Replaced regex parsing with XMLParser
+
+### Status: COMPLETE
+
+---
+
+## Iteration 11 - US-011: Refactor news-aggregator.js - Add Retry Logic
+
+### Completed
+- Created `scripts/utils/http-client.js` with:
+  - `HttpClient` class with configurable options
+  - `fetch(url, options)` - Main fetch with retry logic
+  - `getJson(url, options)` - JSON fetch with retry
+  - `getText(url, options)` - Text fetch with retry
+  - `fetchWithTimeout(url, timeout)` - Standalone timeout function
+  - `fetchAllSettled(urls, options)` - Batch fetch with partial failure handling
+  - `fetchWithRetry(url, options)` - Simple retry wrapper
+
+### Retry Logic Features
+- Configurable retry count (default: 3)
+- Exponential backoff with configurable multiplier
+- Configurable timeout per request
+- Retry on specific status codes (429, 500, 502, 503, 504)
+- Custom user agent support
+
+### Promise.allSettled Pattern
+```javascript
+const results = await Promise.allSettled(
+  feedEntries.map(async ([key, feed]) => {
+    const items = await parseRSSFeed(feed.url);
+    return items.map(item => ({ ...item, source: feed.name }));
+  })
+);
+// Process fulfilled results, log rejected ones
+```
+
+### Files Created
+- `scripts/utils/http-client.js` - HTTP client with retry logic
+
+### Files Updated
+- `scripts/utils/news-aggregator.js` - Uses http-client, Promise.allSettled
+- `scripts/utils/config-manager.js` - Added http config section
+
+### Config Options Added
+```javascript
+http: {
+  retries: getEnv('HTTP_RETRIES', 3),
+  retryDelay: getEnv('HTTP_RETRY_DELAY', 1000),
+  backoffMultiplier: getEnv('HTTP_BACKOFF_MULTIPLIER', 2),
+  timeout: getEnv('HTTP_TIMEOUT', 30000),
+  userAgent: getEnv('HTTP_USER_AGENT', 'claude-init-news-aggregator/1.0'),
+}
+```
+
+### Status: COMPLETE
+
+---
+
+## Iteration 12 - US-012: Refactor send-email-summary.js - Extract HTML Templates
+
+### Completed
+- Created `templates/email/` directory with:
+  - `newsletter.html` - Main HTML email template with template variables
+  - `newsletter.txt` - Plain text email template
+  - `styles.css` - Email styles documentation and reference
+- Created `scripts/utils/email-templates.js` with:
+  - `loadTemplate(name)` - Load template file with caching
+  - `clearTemplateCache()` - Clear template cache
+  - `buildEmailContext(options)` - Build context object from email data
+  - `renderHtmlEmail(options)` - Render HTML using template
+  - `renderTextEmail(options)` - Render text using template
+
+### Template Variables
+- `{{headerIcon}}`, `{{headerTitle}}`, `{{headerSubtitle}}`
+- `{{dateStr}}`, `{{dayOfWeek}}`, `{{greeting}}`
+- `{{introText}}` - Dynamic intro based on changes
+- `{{#if hasDocChanges}}...{{/if}}` - Conditional doc section
+- `{{#each docCategories}}...{{/each}}` - Loop through categories
+- `{{#each recentProjects}}...{{/each}}` - Loop through projects
+- `{{statsProjects}}`, `{{statsDocs}}`, `{{statsVersion}}`
+
+### Files Created
+- `templates/email/newsletter.html` - 109 lines
+- `templates/email/newsletter.txt` - 48 lines
+- `templates/email/styles.css` - 138 lines (documentation)
+- `scripts/utils/email-templates.js` - 210 lines
+
+### Files Updated
+- `scripts/send-email-summary.js` - Reduced from 652 to 339 lines (313 lines removed)
+
+### Line Reduction
+- Original: 652 lines (with 150+ lines inline HTML in each function)
+- Refactored: 339 lines
+- Templates: 150+ lines moved to template files
+- Savings: ~48% code reduction in main file
+
+### Status: COMPLETE
+
+---
+
+## Iteration 13 - US-013: Refactor run-ralph.js - Unify Template Handling
+
+### Completed
+- Created `scripts/utils/prd-validator.js` with:
+  - `PRD_SCHEMA` definition with required/optional fields
+  - `validatePrd(prd)` - Full PRD validation with errors and warnings
+  - `validateUserStory(story, index)` - Individual story validation
+  - `getPrdStats(prd)` - Get statistics (total, complete, remaining, nextStory)
+  - `formatValidationResult(result)` - Format for display
+
+### PRD Validation Rules
+- Required fields: `project`, `branchName`, `userStories`
+- User story required: `id`, `title`, `acceptanceCriteria`, `priority`
+- Validates ID format (US-NNN)
+- Checks for duplicate story IDs
+- Warns if missing "Typecheck passes" criteria
+- Warns if branch doesn't start with "ralph/"
+
+### run-ralph.js Improvements
+- Already uses template-engine.js for CLAUDE.md generation
+- Added `--validate` option for standalone validation
+- PRD validation runs before RALPH execution
+- Added try/catch for JSON parsing
+- Improved error messages with guidance
+- Shows validation warnings without blocking
+- Displays PRD summary and next story before running
+
+### Files Created
+- `scripts/utils/prd-validator.js` - PRD schema validator
+
+### Files Updated
+- `scripts/run-ralph.js` - Added validation, improved error handling
+
+### New CLI Options
+```bash
+claude-init ralph --validate    # Validate prd.json schema
+```
+
+### Status: COMPLETE
+
+---
+
+## Iteration 14 - US-014: Refactor design-system.js - Add Theme Support
+
+### Completed
+- Refactored `scripts/utils/design-system.js` with theme system:
+  - `THEMES` object with 4 themes: default, light, dark, no-color
+  - `detectTheme()` - Auto-detect theme from environment
+  - `getTheme()` - Get current theme name
+  - `setTheme(name)` - Change theme at runtime
+  - `getAvailableThemes()` - List available themes
+  - `ui.hasColors()` - Check if colors are enabled
+
+### Theme Configuration
+```javascript
+// Themes: default, light, dark, no-color
+// Environment variables:
+// - NO_COLOR=1           # Disable all colors (standard)
+// - FORCE_COLOR=1        # Force colors even with NO_COLOR
+// - CLAUDE_INIT_THEME=dark  # Set specific theme
+```
+
+### Comprehensive Icon Set (40+ icons)
+- Status: success, error, warning, info, pending, inProgress, complete
+- Changes: add, modify, remove, update
+- File system: file, folder, link, config
+- Actions: rocket, search, sync, schedule, settings, list, etc.
+- Arrows: arrowRight, arrowLeft, arrowUp, arrowDown, chevronRight
+- Technical: branch, commit, merge, tag, debug, test, build, deploy
+- User/Security: user, lock, key, shield
+
+### Theme-Aware Colors
+- Colors accessible via `ui.colors.primary()`, `ui.colors.success()`, etc.
+- Backward compatible `colors` export using Proxy
+- All ui methods use `currentTheme` for colors
+
+### New UI Methods
+- `ui.section(text)` - Section header with divider
+- `ui.code(text)` - Code/command display
+- `ui.highlight(text)` - Highlighted message
+- `ui.updated(text)` - Update indicator
+- `ui.linkItem(name, prefix)` - Link display
+- `ui.bullet(text, indent)` - Bullet list item
+- `ui.numbered(n, text, indent)` - Numbered list item
+- `ui.pending(text)` - Pending status
+- `ui.inProgress(text)` - In progress status
+- `ui.completed(text)` - Completed status
+- `ui.doubleDivider(length)` - Double line divider
+- `ui.newline()` - Alias for blank
+- `ui.raw(text)` - Raw text output
+
+### Status: COMPLETE
+
+---
+
+## Iteration 15 - US-015: Add Unit Tests - Core Utilities
+
+### Completed
+- Set up vitest test framework with coverage
+- Created `vitest.config.js` with v8 coverage provider
+- Updated `package.json` with test scripts
+
+### Test Files Created
+1. `tests/config-manager.test.js` - 30+ tests
+   - CONFIG defaults
+   - Environment variable overrides
+   - getConfig helper
+   - getFlatConfig helper
+   - CONFIG structure validation
+
+2. `tests/template-engine.test.js` - 35+ tests
+   - TemplateEngine class
+   - Variable substitution (simple, nested, missing)
+   - Conditionals (if/else, truthy/falsy values)
+   - Loops (@index, @first, @last)
+   - Strict mode
+   - validate function
+   - Complex mixed templates
+
+3. `tests/prd-validator.test.js` - 25+ tests
+   - validatePrd (required fields, userStories validation)
+   - getPrdStats (total, complete, remaining, percentComplete)
+   - formatValidationResult
+   - Warning detection
+
+4. `tests/design-system.test.js` - 30+ tests
+   - Theme detection (NO_COLOR, CLAUDE_INIT_THEME)
+   - setTheme/getTheme
+   - Icon exports
+   - ui object methods
+   - no-color theme behavior
+
+### Package.json Updates
+```json
+"scripts": {
+  "test": "vitest run",
+  "test:watch": "vitest",
+  "test:coverage": "vitest run --coverage"
+},
+"devDependencies": {
+  "vitest": "^1.0.0",
+  "@vitest/coverage-v8": "^1.0.0"
+}
+```
+
+### Test Coverage
+- config-manager.js: Comprehensive coverage of defaults and env overrides
+- template-engine.js: Full coverage of all template features
+- prd-validator.js: Complete validation logic tested
+- design-system.js: Theme and UI method coverage
+
+### Status: COMPLETE
+
+---
+
+## Iteration 16 - US-016: Add Unit Tests - Project Analyzer
+
+### Completed
+- Created `tests/project-analyzer.test.js` with comprehensive tests
+
+### Test Fixtures Created
+- React TypeScript project (package.json, tsconfig.json, src/, tests/)
+- Node.js Express project (package.json, src/routes/, __tests__/)
+- Vue project (package.json, src/)
+- Python FastAPI project (pyproject.toml, requirements.txt, src/, tests/)
+- Go project (go.mod, main.go, pkg/, Makefile)
+
+### Test Coverage
+- Main analyzeProject tests (React, Node, Vue, Python, Go)
+- Dependency detection (production, dev, purpose assignment)
+- Framework detection (Next.js, NestJS, SvelteKit, Django, Flask)
+- Convention detection (ES modules, CommonJS)
+- Directory structure (src, tests, entry points)
+- Caching (hit, forceRefresh, clear)
+- Edge cases (empty project, corrupted JSON, mixed README)
+
+### Status: COMPLETE
+
+---
+
+## Iteration 17 - US-017: Add Unit Tests - News Aggregation
+
+### Completed
+- Created `tests/news-aggregator.test.js` with mocked fetch
+
+### Mock Responses
+- RSS 2.0, Atom, RDF feed mocks
+- Hacker News API mock
+- Reddit API mock
+
+### Test Coverage
+- RSS parsing (all formats, malformed, errors, timeout)
+- HN/Reddit API (fetch, empty responses)
+- Filtering (relevance, recency)
+- Cache behavior
+- Helper functions (getNewsByCategory, getTopStory, getNewsStats)
+- Error handling (partial failures, all sources failing)
+- Deduplication
+
+### Status: COMPLETE
+
+---
+
+## Iteration 18 - US-018: Add Integration Tests - CLI Commands
+
+### Completed
+- Created `tests/cli-integration.test.js`
+
+### Test Coverage
+- Setup command (directories, files, --feature)
+- RALPH command (--status, --validate, --reset, --analyze)
+- Error handling (invalid paths, help, version)
+- Validate and news commands
+- Smoke tests (entry point, bin, scripts, templates)
+
+### Status: COMPLETE
+
+---
+
+## Iteration 19 - US-019: Update CLAUDE.md Documentation
+
+### Completed
+- Rewrote CLAUDE.md with all new modules
+- Added utility module documentation
+- Added data registries section
+- Added testing section
+- Added extension guides
+
+### Status: COMPLETE
+
+---
+
+## Iteration 20 - US-020: Update README and Add API Documentation
+
+### Completed
+- Created README.md (200+ lines)
+- Created CONTRIBUTING.md (250+ lines)
+- Created API.md (600+ lines)
+- Created ARCHITECTURE.md (300+ lines)
+
+### Status: COMPLETE
+
+---
+
+# Summary
+
+All 20 user stories completed successfully.
+
+## Key Achievements
+- Centralized configuration with env overrides
+- File system utilities with caching
+- Full-featured template engine
+- 300+ package descriptions, 15+ frameworks
+- Modular setup workflow
+- XML parsing with fast-xml-parser
+- HTTP retry logic with exponential backoff
+- Theme-aware design system with 40+ icons
+- 120+ unit tests, integration tests
+- Complete documentation suite
+

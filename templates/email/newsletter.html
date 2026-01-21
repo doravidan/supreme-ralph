@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #ffffff; line-height: 1.6; color: #1f2937;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 32px 20px;">
+
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid #e5e7eb;">
+      <div style="font-size: 32px; margin-bottom: 8px;">{{headerIcon}}</div>
+      <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">{{headerTitle}}</div>
+      <h1 style="margin: 4px 0 0; font-size: 24px; font-weight: 700; color: #111827;">{{dateStr}}</h1>
+      <p style="margin: 4px 0 0; font-size: 14px; color: #6b7280;">{{headerSubtitle}}</p>
+    </div>
+
+    <!-- Intro Section -->
+    <div style="margin-bottom: 32px;">
+      <p style="margin: 0 0 16px; font-size: 15px; color: #374151;">
+        <strong>{{greeting}} builders.</strong> It's {{dayOfWeek}}.
+      </p>
+      <p style="margin: 0; font-size: 15px; color: #374151;">
+        {{introText}}
+      </p>
+    </div>
+
+    {{#if hasDocChanges}}
+    <!-- WHAT'S NEW Section -->
+    <div style="margin-bottom: 32px;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #4f46e5;">
+        <span style="background: #4f46e5; color: white; font-size: 10px; padding: 4px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">What's New</span>
+      </div>
+      <h2 style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #111827;">
+        {{featuredTitle}}
+      </h2>
+      <p style="margin: 0 0 16px; font-size: 14px; color: #4b5563;">
+        {{featuredDescription}}
+      </p>
+
+      {{#each docCategories}}
+      <div style="margin-bottom: 12px; padding: 12px; background: #f9fafb; border-radius: 8px;">
+        <div style="font-weight: 600; font-size: 13px; color: #374151; margin-bottom: 4px;">{{icon}} {{name}}</div>
+        <div style="font-size: 13px; color: #6b7280;">
+          {{docTitles}}
+        </div>
+      </div>
+      {{/each}}
+
+      <a href="https://docs.anthropic.com/en/docs/claude-code" style="display: inline-block; margin-top: 8px; font-size: 13px; color: #4f46e5; text-decoration: none; font-weight: 600;">Read the docs &rarr;</a>
+    </div>
+    {{/if}}
+
+    {{#if hasRecentProjects}}
+    <!-- PROJECT HIGHLIGHTS Section -->
+    <div style="margin-bottom: 32px;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #10b981;">
+        <span style="background: #10b981; color: white; font-size: 10px; padding: 4px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Project Updates</span>
+      </div>
+      <p style="margin: 0 0 16px; font-size: 14px; color: #4b5563;">
+        Your projects with recent Claude Code setup activity. Each one now has the latest rules, agents, and workflows configured.
+      </p>
+
+      {{#each recentProjects}}
+      <div style="margin-bottom: 16px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+          <div>
+            <h3 style="margin: 0 0 4px; font-size: 16px; font-weight: 600; color: #111827;">{{name}}</h3>
+            <div style="font-size: 12px; color: #6b7280;">
+              <span style="background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 500;">{{language}}</span>
+              {{#if hasFramework}}<span style="background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 500; margin-left: 4px;">{{framework}}</span>{{/if}}
+            </div>
+          </div>
+          <span style="background: {{statusBgColor}}; color: {{statusTextColor}}; font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 600;">
+            {{statusLabel}}
+          </span>
+        </div>
+        <p style="margin: 0; font-size: 13px; color: #4b5563;">
+          {{setupInfo}}
+        </p>
+      </div>
+      {{/each}}
+
+      {{#if hasMoreProjects}}
+      <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
+        +{{moreProjectsCount}} more projects tracked
+      </p>
+      {{/if}}
+    </div>
+    {{else}}
+    {{#if hasProjects}}
+    <div style="margin-bottom: 32px; padding: 20px; background: #f9fafb; border-radius: 12px; text-align: center;">
+      <p style="margin: 0; font-size: 14px; color: #6b7280;">
+        📁 <strong>{{totalProjects}} project{{#if multipleProjects}}s{{/if}}</strong> tracked, all quiet this week.
+      </p>
+    </div>
+    {{/if}}
+    {{/if}}
+
+    {{newsHtml}}
+
+    <!-- Quick Stats -->
+    <div style="margin-bottom: 32px; padding: 20px; background: linear-gradient(135deg, #1f2937 0%, #374151 100%); border-radius: 12px; color: white;">
+      <div style="display: flex; justify-content: space-around; text-align: center;">
+        <div>
+          <div style="font-size: 28px; font-weight: 700;">{{statsProjects}}</div>
+          <div style="font-size: 11px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px;">Projects</div>
+        </div>
+        <div style="border-left: 1px solid rgba(255,255,255,0.2); padding-left: 24px;">
+          <div style="font-size: 28px; font-weight: 700;">{{statsDocs}}</div>
+          <div style="font-size: 11px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px;">Docs</div>
+        </div>
+        <div style="border-left: 1px solid rgba(255,255,255,0.2); padding-left: 24px;">
+          <div style="font-size: 28px; font-weight: 700;">{{statsVersion}}</div>
+          <div style="font-size: 11px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px;">KB Version</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Links -->
+    <div style="text-align: center; padding-top: 24px; border-top: 1px solid #e5e7eb;">
+      <div style="margin-bottom: 16px;">
+        <a href="https://docs.anthropic.com/en/docs/claude-code" style="color: #6b7280; text-decoration: none; font-size: 12px; margin: 0 8px;">Docs</a>
+        <span style="color: #d1d5db;">&bull;</span>
+        <a href="https://github.com/anthropics/claude-code" style="color: #6b7280; text-decoration: none; font-size: 12px; margin: 0 8px;">GitHub</a>
+        <span style="color: #d1d5db;">&bull;</span>
+        <a href="https://docs.anthropic.com/en/docs/claude-code/troubleshooting" style="color: #6b7280; text-decoration: none; font-size: 12px; margin: 0 8px;">Help</a>
+      </div>
+      <p style="margin: 0; font-size: 11px; color: #9ca3af;">
+        You're receiving this because you enabled Claude Code summaries.<br>
+        <a href="#" style="color: #9ca3af;">Unsubscribe</a> or <a href="#" style="color: #9ca3af;">update preferences</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

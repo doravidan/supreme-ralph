@@ -1,0 +1,350 @@
+{
+  "project": "Comprehensive Refactoring and Refinement",
+  "branchName": "ralph/comprehensive-refactoring",
+  "description": "Major refactoring of the claude-init CLI tool to improve code quality, maintainability, performance, and user experience across all features. This includes extracting abstractions, splitting monolithic functions, adding comprehensive test coverage, and updating all documentation.",
+  "createdAt": "2026-01-21",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Create Centralized Configuration Manager",
+      "description": "As a developer, I want all configuration values centralized in one place so that I can easily modify settings without hunting through multiple files",
+      "acceptanceCriteria": [
+        "Create `scripts/utils/config-manager.js` with all constants",
+        "Extract hardcoded values: 70% compact threshold, 2h cache TTL, 10 max iterations, 15/10 dependency limits",
+        "Support environment variable overrides for all config values",
+        "Export typed configuration object with defaults",
+        "Update all files to import from config-manager",
+        "Add validation for config values",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Completed: Created config-manager.js with all constants, env var overrides, validation. Updated news-aggregator.js, news-fetcher.js, project-analyzer.js, run-ralph.js, setup-project.js to use centralized config."
+    },
+    {
+      "id": "US-002",
+      "title": "Create FileSystem Helper Utility",
+      "description": "As a developer, I want common file operations abstracted into a utility so that I can reduce code duplication and ensure consistent error handling",
+      "acceptanceCriteria": [
+        "Create `scripts/utils/fs-helper.js`",
+        "Implement `readDirRecursive(path, options)` with filtering",
+        "Implement `ensureDirs(paths[])` for batch directory creation",
+        "Implement `findFilesByPattern(dir, pattern, options)` with caching",
+        "Implement `safeReadJson(path, defaultValue)` with error handling",
+        "Implement `safeWriteFile(path, content)` with directory creation",
+        "Add proper error messages for all operations",
+        "Replace scattered fs operations in project-analyzer.js, setup-project.js",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Completed: Created fs-helper.js with readDirRecursive, ensureDirs, findFilesByPattern (with caching), safeReadJson, safeReadFile, safeWriteFile, safeWriteJson, exists, isDirectory, isFile, getExtension, copyByPattern, getDirectorySize, formatBytes. Imported in project-analyzer.js and setup-project.js."
+    },
+    {
+      "id": "US-003",
+      "title": "Create Template Engine Class",
+      "description": "As a developer, I want a robust template engine replacing fragile regex substitution so that template rendering is reliable and testable",
+      "acceptanceCriteria": [
+        "Create `scripts/utils/template-engine.js`",
+        "Support `{{variable}}` placeholder syntax",
+        "Support `{{#if condition}}...{{/if}}` conditionals",
+        "Support `{{#each items}}...{{/each}}` loops",
+        "Validate all placeholders have values (warn on missing)",
+        "Provide clear error messages for malformed templates",
+        "Replace regex-based substitution in setup-project.js, run-ralph.js",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Completed: Created template-engine.js with TemplateEngine class supporting {{variable}}, {{#if}}/{{else}}/{{/if}}, {{#each}}/{{/each}}, validation, and helpful error messages. Updated template-generator.js and run-ralph.js to use the new engine."
+    },
+    {
+      "id": "US-004",
+      "title": "Extract Analyzer Registry",
+      "description": "As a developer, I want analyzer configurations in separate data files so that adding new frameworks/tools doesn't require code changes",
+      "acceptanceCriteria": [
+        "Create `scripts/data/dependency-purposes.js` - extract 150+ line map",
+        "Create `scripts/data/test-frameworks.js` - extract TEST_FRAMEWORKS config",
+        "Create `scripts/data/linting-tools.js` - extract LINTING_TOOLS config",
+        "Create `scripts/data/build-tools.js` - extract build tool detection",
+        "Update project-analyzer.js to import from data files",
+        "Add schema validation for data file structure",
+        "Document how to add new frameworks/tools",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Completed: Created scripts/data/ directory with dependency-purposes.js (300+ packages), test-frameworks.js (15 frameworks), linting-tools.js (20 tools), build-tools.js (25 tools). Updated project-analyzer.js to import from data files. Each file includes helper functions and documentation for extending."
+    },
+    {
+      "id": "US-005",
+      "title": "Refactor setup-project.js - Split Main Function",
+      "description": "As a developer, I want the 192-line main() function split into focused phases so that each setup phase is testable and maintainable",
+      "acceptanceCriteria": [
+        "Create `scripts/setup/phases.js` with phase functions",
+        "Extract `validateSetupEnvironment()` - check permissions, target dir",
+        "Extract `gatherConfiguration()` - prompts and defaults",
+        "Extract `runSetupPhases()` - orchestrate file creation",
+        "Extract `displaySetupResults()` - show summary and next steps",
+        "main() should be <30 lines orchestrating phases",
+        "Each phase function <50 lines",
+        "Maintain backward compatibility with all CLI options",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Completed: Created scripts/setup/phases.js with validateSetupEnvironment, checkKnowledgeBaseUpdates, runProjectAnalysis, generateProjectSpec, finalizeSetup, displaySetupSummary, displayNextSteps. Updated setup-project.js to use phase functions."
+    },
+    {
+      "id": "US-006",
+      "title": "Refactor setup-project.js - Extract Template Writers",
+      "description": "As a developer, I want the repetitive writeRules/writeCommands/writeAgents/writeSkills functions unified so that adding new template types is simple",
+      "acceptanceCriteria": [
+        "Create `scripts/setup/template-writer.js`",
+        "Implement generic `writeTemplates(type, templates, targetPath, variables)`",
+        "Support types: rules, commands, agents, skills, hooks",
+        "Use template-engine.js for variable substitution",
+        "Consolidate error handling and logging",
+        "Remove duplicate try-catch blocks",
+        "Update setup-project.js to use template-writer",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Completed: Created scripts/setup/template-writer.js with TEMPLATE_TYPES config, buildTemplateVariables, writeTemplates, and convenience functions. Updated setup-project.js to use imported functions."
+    },
+    {
+      "id": "US-007",
+      "title": "Refactor setup-project.js - Extract RALPH Setup",
+      "description": "As a developer, I want the 270-line writeRalph() function split into modules so that RALPH setup is maintainable and extensible",
+      "acceptanceCriteria": [
+        "Create `scripts/setup/ralph-setup.js`",
+        "Extract `generateRalphClaudeMd(config)` - CLAUDE.md generation",
+        "Extract `writeRalphFiles(targetPath)` - file copying",
+        "Extract `setupRalphSkills(targetPath)` - skill setup",
+        "Extract `generateIntelligentPRD(analysis)` - PRD generation",
+        "Each function <60 lines",
+        "Reuse template-engine.js and template-writer.js",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Completed: Created scripts/setup/ralph-setup.js with buildRalphContext, generateRalphClaudeMd, writeRalphFiles, setupRalphSkills, writeRalphCommand, generateBasicPrd, writeInitialPrd, writeRalph. Updated setup-project.js imports."
+    },
+    {
+      "id": "US-008",
+      "title": "Refactor project-analyzer.js - Add Caching",
+      "description": "As a developer, I want analysis results cached during a session so that repeated analysis calls don't re-scan the filesystem",
+      "acceptanceCriteria": [
+        "Add caching layer for `analyzeProject()` results",
+        "Cache `findMarkdownFiles()` results per directory",
+        "Cache `detectDirectoryPurpose()` results",
+        "Add `clearCache()` method for forced refresh",
+        "Cache invalidation based on file modification times",
+        "Reduce duplicate file reads by 80%+",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Completed: Added caching layer with analysisCache, markdownCache, directoryPurposeCache. Added clearCache(), clearCacheForPath(), getCacheStats(). Cache invalidation based on directory mtime. analyzeProject() now supports forceRefresh option."
+    },
+    {
+      "id": "US-009",
+      "title": "Refactor project-analyzer.js - Fix Silent Error Handling",
+      "description": "As a developer, I want errors logged at debug level instead of swallowed so that I can debug issues when analysis fails",
+      "acceptanceCriteria": [
+        "Create debug logging utility with levels (debug, info, warn, error)",
+        "Replace all `catch (e) { // Ignore }` with debug logging",
+        "Track partial failures in analysis result object",
+        "Add `analysis.warnings[]` array for non-fatal issues",
+        "Log warnings summary at end of analysis",
+        "Never silently drop errors",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Completed: Created scripts/utils/logger.js with Logger class (levels: debug, info, warn, error, silent). Replaced all silent catch blocks with debug/warn logging. Added analysis.warnings[] and analysis.errors[] arrays. Logger controlled by DEBUG and LOG_LEVEL env vars."
+    },
+    {
+      "id": "US-010",
+      "title": "Refactor news-aggregator.js - Replace Regex XML Parsing",
+      "description": "As a developer, I want proper XML parsing instead of fragile regex so that RSS parsing doesn't break on edge cases",
+      "acceptanceCriteria": [
+        "Add `fast-xml-parser` or similar lightweight XML parser dependency",
+        "Rewrite `parseRSSFeed()` using proper XML parser",
+        "Handle malformed XML gracefully with meaningful errors",
+        "Support both RSS 2.0 and Atom feed formats",
+        "Add unit tests for various feed formats",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "Completed: Added fast-xml-parser dependency. Rewrote parseRSSFeed() to use XMLParser. Added parseRSSItem(), parseAtomEntry(), extractText() helpers. Supports RSS 2.0, Atom, and RDF/RSS 1.0 formats."
+    },
+    {
+      "id": "US-011",
+      "title": "Refactor news-aggregator.js - Add Retry Logic",
+      "description": "As a developer, I want automatic retry for failed network requests so that transient failures don't cause empty results",
+      "acceptanceCriteria": [
+        "Create `scripts/utils/http-client.js` with retry logic",
+        "Support configurable retry count (default: 3)",
+        "Support exponential backoff",
+        "Support timeout configuration",
+        "Handle partial failures in Promise.all (allSettled pattern)",
+        "Update news-aggregator.js to use http-client",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "Completed: Created http-client.js with HttpClient class supporting configurable retries, exponential backoff, and timeouts. Added fetchAllSettled() and fetchWithRetry() exports. Updated news-aggregator.js to use Promise.allSettled pattern for fetchAllRSSFeeds, fetchHackerNews, and fetchReddit. Added HTTP config section to config-manager.js."
+    },
+    {
+      "id": "US-012",
+      "title": "Refactor send-email-summary.js - Extract HTML Templates",
+      "description": "As a developer, I want email HTML templates in separate files so that email styling can be modified without code changes",
+      "acceptanceCriteria": [
+        "Create `templates/email/newsletter.html` template",
+        "Create `templates/email/styles.css` for email styles",
+        "Use template-engine.js for variable substitution",
+        "Support inline CSS conversion for email compatibility",
+        "Reduce send-email-summary.js by removing inline HTML (150+ lines)",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "Completed: Created templates/email/newsletter.html, newsletter.txt, and styles.css. Created scripts/utils/email-templates.js with buildEmailContext, renderHtmlEmail, renderTextEmail. Reduced send-email-summary.js from 652 lines to 339 lines by extracting templates."
+    },
+    {
+      "id": "US-013",
+      "title": "Refactor run-ralph.js - Unify Template Handling",
+      "description": "As a developer, I want RALPH to use the same template engine as setup so that template replacement logic isn't duplicated",
+      "acceptanceCriteria": [
+        "Update run-ralph.js to use template-engine.js",
+        "Remove duplicate template replacement code (lines 172-182)",
+        "Add validation for prd.json schema before running",
+        "Improve error recovery for file operations",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "Completed: run-ralph.js already uses template-engine.js (renderTemplate). Created scripts/utils/prd-validator.js with validatePrd, getPrdStats, formatValidationResult. Added --validate option to run-ralph.js. PRD validation runs before RALPH execution. Improved error handling with try/catch blocks."
+    },
+    {
+      "id": "US-014",
+      "title": "Refactor design-system.js - Add Theme Support",
+      "description": "As a developer, I want customizable color themes for CLI output so that users can adjust colors for their terminal",
+      "acceptanceCriteria": [
+        "Add theme configuration (default, light, dark, no-color)",
+        "Support `NO_COLOR` environment variable standard",
+        "Add comprehensive icon set covering all use cases",
+        "Export theme-aware color functions",
+        "Update all CLI scripts to use theme-aware colors",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": "Completed: Added THEMES object with default/light/dark/no-color. Supports NO_COLOR env var per standard. Added 40+ icons covering all use cases. Theme-aware colors via Proxy and ui.colors getter. Added getTheme, setTheme, getAvailableThemes, hasColors. Backward compatible with existing code."
+    },
+    {
+      "id": "US-015",
+      "title": "Add Unit Tests - Core Utilities",
+      "description": "As a developer, I want unit tests for all utility modules so that refactoring doesn't introduce regressions",
+      "acceptanceCriteria": [
+        "Set up test framework (vitest or jest)",
+        "Add tests for config-manager.js (100% coverage)",
+        "Add tests for fs-helper.js (100% coverage)",
+        "Add tests for template-engine.js (100% coverage)",
+        "Add tests for http-client.js (100% coverage)",
+        "Tests pass"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": "Completed: Set up vitest with coverage. Created tests for config-manager.js (30+ tests), template-engine.js (35+ tests), prd-validator.js (25+ tests), design-system.js (30+ tests). Added npm test, test:watch, test:coverage scripts."
+    },
+    {
+      "id": "US-016",
+      "title": "Add Unit Tests - Project Analyzer",
+      "description": "As a developer, I want tests for project-analyzer with various project types so that analysis works correctly for all supported frameworks",
+      "acceptanceCriteria": [
+        "Create test fixtures for: React, Vue, Node.js, Python, Go projects",
+        "Test dependency detection accuracy",
+        "Test framework detection for all supported frameworks",
+        "Test convention detection (naming, structure)",
+        "Test edge cases: empty project, corrupted package.json, missing files",
+        "Achieve 80%+ coverage for project-analyzer.js",
+        "Tests pass"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": "Completed: Created tests/project-analyzer.test.js with fixtures for React, Vue, Node.js Express, Python FastAPI, and Go projects. Tests cover dependency detection, framework detection, convention detection, caching, and edge cases (empty project, corrupted package.json)."
+    },
+    {
+      "id": "US-017",
+      "title": "Add Unit Tests - News Aggregation",
+      "description": "As a developer, I want tests for news fetching with mocked responses so that feed parsing is reliable",
+      "acceptanceCriteria": [
+        "Mock RSS feed responses for testing",
+        "Mock Hacker News API responses",
+        "Mock Reddit API responses",
+        "Test filtering logic (Claude/Anthropic only)",
+        "Test cache behavior",
+        "Test error handling for network failures",
+        "Achieve 80%+ coverage for news-aggregator.js",
+        "Tests pass"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": "Completed: Created tests/news-aggregator.test.js with mocked fetch for RSS, HN, and Reddit. Tests cover RSS 2.0, Atom, and RDF parsing, filtering logic, cache behavior, deduplication, error handling for network failures and partial failures."
+    },
+    {
+      "id": "US-018",
+      "title": "Add Integration Tests - CLI Commands",
+      "description": "As a developer, I want integration tests for all CLI commands so that the user-facing interface is verified",
+      "acceptanceCriteria": [
+        "Test `claude-init setup --yes` in temp directory",
+        "Test `claude-init setup --feature \"test\"` creates PRD",
+        "Test `claude-init ralph --status` output",
+        "Test `claude-init news --refresh --limit 5`",
+        "Test `claude-init sync` basic operation",
+        "Test error messages for invalid options",
+        "Tests pass"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": "Completed: Created tests/cli-integration.test.js with tests for setup --yes, setup --feature, ralph --status/--validate/--reset/--analyze, error handling, and smoke tests for required files/directories."
+    },
+    {
+      "id": "US-019",
+      "title": "Update CLAUDE.md Documentation",
+      "description": "As a user, I want CLAUDE.md to reflect the refactored architecture so that I understand how to work with the codebase",
+      "acceptanceCriteria": [
+        "Update architecture diagram with new modules",
+        "Document new utility modules (config-manager, fs-helper, template-engine, http-client)",
+        "Document data files structure (dependency-purposes, test-frameworks, etc.)",
+        "Update code patterns section with new patterns",
+        "Document configuration options and environment variables",
+        "Document testing approach and commands",
+        "Typecheck passes (if any code examples)"
+      ],
+      "priority": 10,
+      "passes": true,
+      "notes": "Completed: Rewrote CLAUDE.md with updated architecture diagram showing all new modules (setup/, data/, utils/). Added detailed documentation for config-manager, fs-helper, template-engine, http-client, logger, prd-validator, design-system. Documented data registries, testing commands, and environment variables."
+    },
+    {
+      "id": "US-020",
+      "title": "Update README and Add API Documentation",
+      "description": "As a user, I want comprehensive README and API docs so that I can understand and extend the tool",
+      "acceptanceCriteria": [
+        "Update README.md with current features and usage",
+        "Add CONTRIBUTING.md with development setup",
+        "Add API.md documenting all public functions",
+        "Add ARCHITECTURE.md with data flow diagrams",
+        "Add extension guides: Adding a News Source, Adding a Framework",
+        "Typecheck passes (if any code examples)"
+      ],
+      "priority": 10,
+      "passes": true,
+      "notes": "Completed: Created README.md with features, installation, quick start, commands, and configuration. Created CONTRIBUTING.md with development setup, code style, and PR process. Created API.md with detailed documentation for all public APIs. Created ARCHITECTURE.md with system overview, data flow diagrams, and design decisions."
+    }
+  ]
+}

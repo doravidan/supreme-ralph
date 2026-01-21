@@ -1,0 +1,102 @@
+# {{projectName}}
+
+{{projectDescription}}
+
+## Project Overview
+
+This is a {{techStack}} project.
+
+## Tech Stack
+
+{{#if hasTypeScript}}
+- **Language**: TypeScript
+{{/if}}
+{{#if hasPython}}
+- **Language**: Python
+{{/if}}
+{{#if hasReact}}
+- **Framework**: React
+{{/if}}
+{{#if hasDatabase}}
+- **Database**: {{databaseType}}
+{{/if}}
+{{#if hasDocker}}
+- **Containerization**: Docker
+{{/if}}
+
+## Common Commands
+
+| Command | Description |
+|---------|-------------|
+| `{{buildCommand}}` | Build the project |
+| `{{testCommand}}` | Run tests |
+| `{{lintCommand}}` | Run linter |
+| `{{devCommand}}` | Start development server |
+
+## Code Style
+
+### General Guidelines
+- Write clean, readable code
+- Use meaningful variable and function names
+- Keep functions small and focused
+- Add comments for complex logic only
+
+{{#if hasTypeScript}}
+### TypeScript Conventions
+- Use strict mode
+- Prefer `const` over `let`
+- Use interfaces for object shapes
+- Avoid `any` type when possible
+{{/if}}
+
+{{#if hasPython}}
+### Python Conventions
+- Follow PEP 8 style guide
+- Use type hints
+- Prefer f-strings for formatting
+- Use context managers for resources
+{{/if}}
+
+## Project Structure
+
+```
+project/
+├── src/           # Source code
+├── tests/         # Test files
+├── docs/          # Documentation
+└── scripts/       # Utility scripts
+```
+
+{{#if includeSecuritySection}}
+## Security
+
+### Do NOT
+- Commit secrets, API keys, or credentials
+- Log sensitive information
+- Use hardcoded passwords
+- Trust user input without validation
+
+### Do
+- Use environment variables for secrets
+- Validate and sanitize all inputs
+- Use parameterized queries for database operations
+- Keep dependencies updated
+{{/if}}
+
+{{#if includePerformanceSection}}
+## Performance
+
+- Profile before optimizing
+- Use appropriate data structures
+- Implement caching where beneficial
+- Consider lazy loading for large resources
+{{/if}}
+
+## Git Workflow
+
+- Use descriptive commit messages
+- Keep commits focused and atomic
+- Create feature branches for new work
+- Write meaningful PR descriptions
+
+{{customInstructions}}

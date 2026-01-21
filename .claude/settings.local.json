@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(test:*)",
+      "Bash(cat:*)",
+      "Bash(dir:*)",
+      "Bash(node scripts/setup-project.js:*)",
+      "Bash(node:*)",
+      "Bash(ls -la \"f:\\\\projecinit\\\\bin\"\" 2>/dev/null && ls -la \"f:projecinitscripts\"\")",
+      "Skill(setup-project)",
+      "Skill(setup-project:*)",
+      "Skill(ralph-run)",
+      "Skill(ralph-run:*)",
+      "Bash(bash:*)",
+      "Bash(ls:*)",
+      "Skill(ralph)",
+      "Skill(ralph:*)",
+      "Bash(find:*)",
+      "Bash(tree:*)",
+      "Bash(xargs:*)",
+      "Bash(cd /d f:projecinit)"
+    ]
+  }
+}

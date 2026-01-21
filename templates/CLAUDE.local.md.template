@@ -1,0 +1,17 @@
+# Local Configuration
+
+This file contains your personal, machine-specific settings for this project.
+It is automatically added to .gitignore and should not be committed.
+
+## Personal Preferences
+
+Add your personal preferences here that shouldn't be shared with the team.
+
+## Local Environment
+
+- Local API URL: http://localhost:3000
+- Local Database: localhost:5432
+
+## Notes
+
+Use this space for personal notes about the project.

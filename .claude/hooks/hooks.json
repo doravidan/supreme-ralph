@@ -1,0 +1,29 @@
+{
+  "description": "Project hooks configuration",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run lint",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "COMPACT_THRESHOLD=70 ${CLAUDE_PROJECT_DIR}/.claude/hooks/auto-compact.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

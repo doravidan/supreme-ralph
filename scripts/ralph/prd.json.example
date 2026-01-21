@@ -1,0 +1,66 @@
+{
+  "project": "Example Feature",
+  "branchName": "ralph/example-feature",
+  "description": "Example PRD showing the structure for RALPH automation",
+  "createdAt": "2026-01-19",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Create data model",
+      "description": "As a developer, I want a well-defined data model so that I can build features on a solid foundation",
+      "acceptanceCriteria": [
+        "TypeScript interfaces are defined",
+        "Types are exported for use in other modules",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Implement core logic",
+      "description": "As a developer, I want the core business logic implemented so that the feature works correctly",
+      "acceptanceCriteria": [
+        "Core functions are implemented",
+        "Error handling is in place",
+        "Unit tests are written",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Add API endpoint",
+      "description": "As a user, I want an API endpoint so that I can interact with the feature",
+      "acceptanceCriteria": [
+        "Endpoint is defined and routed",
+        "Input validation is implemented",
+        "Response format is documented",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Build UI component",
+      "description": "As a user, I want a UI to interact with the feature visually",
+      "acceptanceCriteria": [
+        "Component is created with proper props",
+        "Styling matches design system",
+        "Component is accessible (a11y)",
+        "Typecheck passes",
+        "Verify in browser"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

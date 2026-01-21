@@ -1,0 +1,71 @@
+---
+paths:
+  - "**/*.test.*"
+  - "**/*.spec.*"
+  - "**/tests/**"
+  - "**/__tests__/**"
+  - "**/test/**"
+---
+
+# Testing Rules
+
+## Test Organization
+- Keep tests close to the code they test
+- Use descriptive test names that explain the expected behavior
+- Group related tests using describe/context blocks
+- Follow the Arrange-Act-Assert pattern
+
+## Test Coverage
+- Aim for high coverage on critical business logic
+- Test edge cases and error scenarios
+- Don't test implementation details, test behavior
+- Include both positive and negative test cases
+
+## Test Quality
+- Each test should test one thing
+- Tests should be independent and isolated
+- Use meaningful assertions with clear messages
+- Avoid testing the framework/language
+
+## Mocking
+- Mock external dependencies (APIs, databases)
+- Use dependency injection to make mocking easier
+- Don't over-mock - keep tests realistic
+- Reset mocks between tests
+
+## Test Naming
+```javascript
+// Pattern: should [expected behavior] when [condition]
+it('should return user data when valid ID provided')
+it('should throw error when ID is not found')
+it('should handle empty input gracefully')
+```
+
+## Vitest Patterns (This Project)
+```javascript
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+// Mock global fetch
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
+
+// Reset mocks between tests
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
+// Cleanup temp directories
+afterEach(async () => {
+  await fs.remove(tempDir);
+});
+```
+
+## Performance Tests
+- Add performance tests for critical paths
+- Set baseline metrics and alert on regressions
+- Test with realistic data volumes
+
+## Integration Tests
+- Test component interactions
+- Use test databases/containers
+- Clean up test data after each test

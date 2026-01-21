@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+coverage/
+
+# Environment files
+.env
+.env.*
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Cache
+knowledge-base/.cache/
+.cache/
+
+# Lock files (optional - uncomment if you want to track)
+# package-lock.json
+
+# Temporary files
+*.tmp
+*.temp
+nul
+
+# Credentials
+*.pem
+*.key
+credentials*
+secrets/

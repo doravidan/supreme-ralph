@@ -1,0 +1,45 @@
+{
+  "name": "claude-init",
+  "version": "1.0.0",
+  "description": "CLI tool for scaffolding projects with Claude Code best practices",
+  "type": "module",
+  "bin": {
+    "claude-init": "./bin/claude-init.js"
+  },
+  "scripts": {
+    "setup": "node bin/claude-init.js setup",
+    "sync": "node bin/claude-init.js sync",
+    "check": "node bin/claude-init.js check",
+    "validate": "node bin/claude-init.js validate",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "fast-xml-parser": "^4.3.0",
+    "fs-extra": "^11.2.0",
+    "inquirer": "^9.2.0",
+    "node-fetch": "^3.3.0",
+    "ora": "^8.0.0",
+    "resend": "^3.0.0",
+    "turndown": "^7.1.0",
+    "yaml": "^2.3.0"
+  },
+  "devDependencies": {
+    "vitest": "^1.0.0",
+    "@vitest/coverage-v8": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "cli",
+    "scaffold",
+    "project-init"
+  ],
+  "license": "MIT"
+}

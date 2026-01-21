@@ -1,0 +1,59 @@
+{{headerTitle}}
+{{dateStr}}
+{{headerSubtitle}}
+{{separator}}
+
+{{greeting}} builders. It's {{dayOfWeek}}.
+
+{{introText}}
+
+{{#if hasDocChanges}}
+{{doubleSeparator}}
+WHAT'S NEW
+{{doubleSeparator}}
+
+{{#if hasFeaturedDoc}}
+▸ {{featuredTitle}}
+  {{featuredDescription}}
+
+{{/if}}
+{{#each docCategories}}
+{{icon}} {{name}}
+  {{docTitles}}
+
+{{/each}}
+→ Read the docs: https://docs.anthropic.com/en/docs/claude-code
+
+{{/if}}
+{{#if hasRecentProjects}}
+{{doubleSeparator}}
+PROJECT UPDATES
+{{doubleSeparator}}
+
+Your projects with recent Claude Code setup activity:
+
+{{#each recentProjects}}
+{{statusIcon}} {{name}} [{{language}}{{#if hasFramework}}/{{framework}}{{/if}}]
+    {{setupInfo}}
+
+{{/each}}
+{{#if hasMoreProjects}}
++{{moreProjectsCount}} more projects tracked
+
+{{/if}}
+{{else}}
+{{#if hasProjects}}
+📁 {{totalProjects}} project{{#if multipleProjects}}s{{/if}} tracked, all quiet this week.
+
+{{/if}}
+{{/if}}
+{{newsText}}
+{{separator}}
+STATS: {{statsProjects}} Projects | {{statsDocs}} Docs | {{statsVersion}}
+{{separator}}
+
+Docs:   https://docs.anthropic.com/en/docs/claude-code
+GitHub: https://github.com/anthropics/claude-code
+Help:   https://docs.anthropic.com/en/docs/claude-code/troubleshooting
+
+You're receiving this because you enabled Claude Code summaries.

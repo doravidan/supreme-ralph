@@ -1,0 +1,163 @@
+{
+  "claudeInitVersion": "1.0.0",
+  "projectId": "78605fb9",
+  "initializedAt": "2026-01-18T15:47:59.683Z",
+  "lastUpdated": "2026-01-21T09:26:57.850Z",
+  "knowledgeBaseVersion": "0.3.0",
+  "syncedFromKb": "2026-01-21T09:26:57.850Z",
+  "setupHistory": [
+    {
+      "timestamp": "2026-01-18T15:47:59.683Z",
+      "kbVersion": "0.3.0",
+      "setupType": "initial",
+      "changes": [
+        {
+          "type": "created",
+          "item": "CLAUDE.md",
+          "description": "Project documentation"
+        },
+        {
+          "type": "created",
+          "item": "settings.json",
+          "description": "Claude Code settings"
+        },
+        {
+          "type": "created",
+          "item": "Rules",
+          "description": "typescript style, security, testing rules"
+        },
+        {
+          "type": "created",
+          "item": "Commands",
+          "description": "Review, test, deploy slash commands"
+        },
+        {
+          "type": "created",
+          "item": "Agents",
+          "description": "Code reviewer, debugger, researcher agents"
+        },
+        {
+          "type": "created",
+          "item": "Skills",
+          "description": "Reusable skill templates"
+        },
+        {
+          "type": "created",
+          "item": "Hooks",
+          "description": "Pre/post command automation"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-01-21T09:13:07.606Z",
+      "kbVersion": "0.3.0",
+      "setupType": "update",
+      "changes": [
+        {
+          "type": "updated",
+          "item": "Configuration",
+          "description": "Settings refreshed"
+        },
+        {
+          "type": "updated",
+          "item": "Rules",
+          "description": "typescript style, security, testing rules"
+        },
+        {
+          "type": "updated",
+          "item": "Commands",
+          "description": "Review, test, deploy slash commands"
+        },
+        {
+          "type": "updated",
+          "item": "Agents",
+          "description": "Code reviewer, debugger, researcher agents"
+        },
+        {
+          "type": "updated",
+          "item": "Skills",
+          "description": "Reusable skill templates"
+        },
+        {
+          "type": "updated",
+          "item": "Hooks",
+          "description": "Pre/post command automation"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-01-21T09:25:38.334Z",
+      "kbVersion": "0.3.0",
+      "setupType": "update",
+      "changes": [
+        {
+          "type": "updated",
+          "item": "Configuration",
+          "description": "Settings refreshed"
+        },
+        {
+          "type": "updated",
+          "item": "Rules",
+          "description": "typescript style, security, testing rules"
+        },
+        {
+          "type": "updated",
+          "item": "Commands",
+          "description": "Review, test, deploy slash commands"
+        },
+        {
+          "type": "updated",
+          "item": "Agents",
+          "description": "Code reviewer, debugger, researcher agents"
+        },
+        {
+          "type": "updated",
+          "item": "Skills",
+          "description": "Reusable skill templates"
+        },
+        {
+          "type": "updated",
+          "item": "Hooks",
+          "description": "Pre/post command automation"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-01-21T09:26:57.850Z",
+      "kbVersion": "0.3.0",
+      "setupType": "update",
+      "changes": [
+        {
+          "type": "updated",
+          "item": "Configuration",
+          "description": "Settings refreshed"
+        },
+        {
+          "type": "updated",
+          "item": "Rules",
+          "description": "typescript style, security, testing rules"
+        },
+        {
+          "type": "updated",
+          "item": "Commands",
+          "description": "Review, test, deploy slash commands"
+        },
+        {
+          "type": "updated",
+          "item": "Agents",
+          "description": "Code reviewer, debugger, researcher agents"
+        },
+        {
+          "type": "updated",
+          "item": "Skills",
+          "description": "Reusable skill templates"
+        },
+        {
+          "type": "updated",
+          "item": "Hooks",
+          "description": "Pre/post command automation"
+        }
+      ]
+    }
+  ]
+}
