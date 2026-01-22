@@ -4,6 +4,14 @@
  * Handles all RALPH autonomous development agent setup,
  * including file generation, skill installation, and PRD creation.
  *
+ * Enhanced with patterns from Ralphy (github.com/michaelshimeles/ralphy):
+ * - Two modes: Single-task (brownfield) and PRD loop (greenfield)
+ * - Configurable rules and boundaries via .ralph/config.yaml
+ * - Multiple PRD formats: JSON, Markdown (- [ ] tasks), YAML
+ * - Retry logic with exponential backoff
+ * - Branch-per-task and PR workflows
+ * - Progress tracking and cost reporting
+ *
  * @module setup/ralph-setup
  */
 
@@ -15,6 +23,7 @@ import {
   generateIntelligentPrd,
   generatePrdMarkdown
 } from '../utils/spec-generator.js';
+import { render } from '../utils/template-engine.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,9 +39,12 @@ const TEMPLATES_PATH = path.join(__dirname, '..', '..', 'templates');
  */
 export function buildRalphContext(config, analysis = null) {
   const context = {
+    projectName: config.projectName || 'my-project',
+    description: config.description || '',
     language: config.language || 'typescript',
     framework: config.framework || 'none',
     testFramework: 'unknown',
+    linter: 'unknown',
     moduleSystem: 'unknown',
     namingStyle: 'camelCase',
     importOrder: 'Not specified',
@@ -45,13 +57,19 @@ export function buildRalphContext(config, analysis = null) {
     buildCommand: config.buildCommand || 'npm run build',
     testCommand: config.testCommand || 'npm test',
     lintCommand: config.lintCommand || 'npm run lint',
-    typecheckCommand: 'echo "No typecheck"'
+    typecheckCommand: 'echo "No typecheck"',
+    // New: Rules and boundaries from config
+    rules: config.rules || [],
+    boundaries: config.boundaries || []
   };
 
   if (analysis) {
+    context.projectName = analysis.overview?.name || config.projectName || 'my-project';
+    context.description = analysis.overview?.description || config.description || '';
     context.language = analysis.techStack.language;
     context.framework = analysis.techStack.framework;
     context.testFramework = analysis.patterns.testing.framework;
+    context.linter = analysis.patterns.linting.tool || 'unknown';
     context.moduleSystem = analysis.conventions.moduleSystem;
     context.namingStyle = analysis.conventions.namingStyle;
     context.importOrder = analysis.conventions.importOrder.length > 0
@@ -140,54 +158,60 @@ ${context.hasTypes ? `Typecheck: \`${context.typecheckCommand}\`` : ''}
  * @returns {string} Rendered CLAUDE.md content
  */
 export function generateRalphClaudeMd(template, context) {
-  // Apply template replacements
-  let content = template
-    .replace(/\{\{typecheckCommand\}\}/g, context.typecheckCommand)
-    .replace(/\{\{lintCommand\}\}/g, context.lintCommand)
-    .replace(/\{\{testCommand\}\}/g, context.testCommand)
-    .replace(/\{\{buildCommand\}\}/g, context.buildCommand)
-    .replace(/\{\{branchName\}\}/g, 'ralph/feature-name')
-    .replace(/\{\{projectContext\}\}/g, context.projectContext)
-    .replace(/\{\{language\}\}/g, context.language)
-    .replace(/\{\{framework\}\}/g, context.framework !== 'none' ? context.framework : 'None')
-    .replace(/\{\{moduleSystem\}\}/g, context.moduleSystem)
-    .replace(/\{\{testFramework\}\}/g, context.testFramework)
-    .replace(/\{\{namingStyle\}\}/g, context.namingStyle)
-    .replace(/\{\{importOrder\}\}/g, context.importOrder)
-    .replace(/\{\{codebasePatterns\}\}/g, context.codebasePatterns);
-
-  // Handle conditional sections
-  if (context.hasTypes) {
-    content = content.replace(/\{\{#if hasTypes\}\}([\s\S]*?)\{\{\/if\}\}/g, '$1');
-  } else {
-    content = content.replace(/\{\{#if hasTypes\}\}[\s\S]*?\{\{\/if\}\}/g, '');
-  }
-
-  if (context.strictTypes) {
-    content = content.replace(/\{\{#if strictTypes\}\}([\s\S]*?)\{\{\/if\}\}/g, '$1');
-  } else {
-    content = content.replace(/\{\{#if strictTypes\}\}[\s\S]*?\{\{\/if\}\}/g, '');
-  }
-
-  if (context.srcDir) {
-    content = content.replace(/\{\{#if srcDir\}\}([\s\S]*?)\{\{\/if\}\}/g, '$1').replace(/\{\{srcDir\}\}/g, context.srcDir);
-  } else {
-    content = content.replace(/\{\{#if srcDir\}\}[\s\S]*?\{\{\/if\}\}/g, '');
-  }
-
-  if (context.testDir) {
-    content = content.replace(/\{\{#if testDir\}\}([\s\S]*?)\{\{\/if\}\}/g, '$1').replace(/\{\{testDir\}\}/g, context.testDir);
-  } else {
-    content = content.replace(/\{\{#if testDir\}\}[\s\S]*?\{\{\/if\}\}/g, '');
-  }
-
-  if (context.entryPoint) {
-    content = content.replace(/\{\{#if entryPoint\}\}([\s\S]*?)\{\{\/if\}\}/g, '$1').replace(/\{\{entryPoint\}\}/g, context.entryPoint);
-  } else {
-    content = content.replace(/\{\{#if entryPoint\}\}[\s\S]*?\{\{\/if\}\}/g, '');
-  }
+  // Use the template engine for full rendering (handles {{#if}}, {{#each}}, etc.)
+  let content = render(template, {
+    ...context,
+    // Ensure framework displays correctly
+    framework: context.framework !== 'none' ? context.framework : 'None',
+    // Default branch name
+    branchName: 'ralph/feature-name',
+    // Ensure linter is set
+    linter: context.linter || 'unknown'
+  });
 
   return content;
+}
+
+/**
+ * Write .ralph/config.yaml configuration file
+ *
+ * @param {string} targetPath - Target project directory
+ * @param {object} context - Context object from buildRalphContext
+ * @returns {Promise<void>}
+ */
+export async function writeRalphConfig(targetPath, context) {
+  const ralphConfigDir = path.join(targetPath, '.ralph');
+  await fs.ensureDir(ralphConfigDir);
+
+  // Read config template
+  const configTemplate = await fs.readFile(
+    path.join(TEMPLATES_PATH, 'ralph', 'config.yaml.template'),
+    'utf-8'
+  );
+
+  // Render template with context
+  const configContent = render(configTemplate, context);
+
+  await fs.writeFile(path.join(ralphConfigDir, 'config.yaml'), configContent, 'utf-8');
+  ui.successText(`  ${ui.icons.success} Created .ralph/config.yaml`);
+
+  // Create initial progress.txt in .ralph directory
+  const progressContent = `# RALPH Progress Log
+
+Started: ${new Date().toISOString().split('T')[0]}
+Project: ${context.projectName}
+
+## Discovered Patterns
+(Patterns will be logged here as they are discovered during iterations)
+
+## Learnings
+(Key learnings from each task will be recorded here)
+
+---
+
+`;
+  await fs.writeFile(path.join(ralphConfigDir, 'progress.txt'), progressContent, 'utf-8');
+  ui.successText(`  ${ui.icons.success} Created .ralph/progress.txt`);
 }
 
 /**
@@ -205,6 +229,12 @@ export async function writeRalphFiles(targetPath, config, analysis = null) {
   // Create tasks directory for PRDs
   await fs.ensureDir(path.join(targetPath, 'tasks'));
 
+  // Build context for templates
+  const context = buildRalphContext(config, analysis);
+
+  // Write .ralph/config.yaml
+  await writeRalphConfig(targetPath, context);
+
   // Copy ralph.sh template
   const ralphShTemplate = await fs.readFile(
     path.join(TEMPLATES_PATH, 'ralph', 'ralph.sh.template'),
@@ -214,12 +244,11 @@ export async function writeRalphFiles(targetPath, config, analysis = null) {
   await fs.chmod(path.join(ralphDir, 'ralph.sh'), '755');
   ui.successText(`  ${ui.icons.success} Created scripts/ralph/ralph.sh`);
 
-  // Generate CLAUDE.md
+  // Generate CLAUDE.md (context already built above)
   const claudeMdTemplate = await fs.readFile(
     path.join(TEMPLATES_PATH, 'ralph', 'CLAUDE.md.template'),
     'utf-8'
   );
-  const context = buildRalphContext(config, analysis);
   const ralphClaudeMd = generateRalphClaudeMd(claudeMdTemplate, context);
   await fs.writeFile(path.join(ralphDir, 'CLAUDE.md'), ralphClaudeMd, 'utf-8');
   ui.successText(`  ${ui.icons.success} Created scripts/ralph/CLAUDE.md${analysis ? ' (with project context)' : ''}`);
@@ -549,6 +578,7 @@ export async function writeRalph(targetPath, config, analysis = null) {
 export default {
   buildRalphContext,
   generateRalphClaudeMd,
+  writeRalphConfig,
   writeRalphFiles,
   setupRalphSkills,
   writeRalphCommand,
