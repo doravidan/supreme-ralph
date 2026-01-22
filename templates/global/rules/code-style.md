@@ -1,0 +1,34 @@
+# Code Style Rules
+
+## General
+- Use consistent indentation (2 spaces)
+- Keep lines under 100 characters
+- Use descriptive variable and function names
+- Avoid abbreviations unless widely known
+
+## Naming Conventions
+
+- **Components/Classes**: PascalCase (`UserProfile`, `AuthService`)
+- **Functions/Variables**: camelCase (`getUserData`, `isActive`)
+- **Constants**: UPPER_SNAKE_CASE (`MAX_RETRIES`, `API_URL`)
+- **Files**: kebab-case for utilities, PascalCase for components
+
+
+
+## Code Organization
+- Group related code together
+- Keep functions small and focused (max 30 lines recommended)
+- Use early returns to reduce nesting
+- Extract complex conditions into named variables
+
+## Comments
+- Comment the "why", not the "what"
+- Keep comments up to date with code changes
+- Use TODO comments for planned improvements
+- Document public APIs and complex algorithms
+
+## Best Practices
+- Prefer composition over inheritance
+- Write self-documenting code
+- Handle errors appropriately
+- Avoid magic numbers - use named constants

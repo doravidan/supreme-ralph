@@ -59,23 +59,51 @@
 
 ## 🚀 Quick Start
 
-### Installation
+### Global Installation (Recommended)
+
+Install RALPH globally to make slash commands available in all your projects:
 
 ```bash
-# Clone the repository
+# Option 1: Using npx (no clone needed)
+npx supreme-ralph install
+
+# Option 2: Clone and install
 git clone https://github.com/doravidan/supreme-ralph.git
 cd supreme-ralph
-
-# Install dependencies
 npm install
-
-# Link globally (optional)
-npm link
+node scripts/install-global.js
 ```
 
-### Initialize Your Project
+This installs to `~/.claude/` and makes these commands available **everywhere**:
+
+| Command | Description |
+|---------|-------------|
+| `/setup-project` | Interactive project setup with questions |
+| `/ralph` | RALPH status and management |
+| `/ralph-run` | Start autonomous development |
+| `/prd` | Generate PRD from description |
+| `/code-review` | Run code review |
+
+### Using RALPH (After Global Install)
 
 ```bash
+# In any project directory, open Claude Code and type:
+
+/setup-project          # Interactive setup (asks questions!)
+/prd Add user auth      # Generate a PRD for a feature
+/ralph                  # Check PRD status
+/ralph-run              # Start autonomous development
+```
+
+### Legacy CLI Usage (Optional)
+
+If you prefer CLI commands instead of slash commands:
+
+```bash
+# Install dependencies
+cd supreme-ralph
+npm install
+
 # Interactive setup with prompts
 claude-init setup
 
@@ -84,19 +112,9 @@ claude-init setup --yes
 
 # Setup + create PRD for a feature
 claude-init setup --feature "Add user authentication with JWT"
-```
 
-### Run RALPH
-
-```bash
-# Start autonomous development (20 iterations)
+# Run RALPH via bash script
 ./scripts/ralph/ralph.sh 20
-
-# Single task mode (no PRD needed)
-./scripts/ralph/ralph.sh --task "Fix the navbar styling"
-
-# Check status
-node scripts/run-ralph.js --status
 ```
 
 ---

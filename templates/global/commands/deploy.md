@@ -1,0 +1,44 @@
+---
+description: Deploy the project to the specified environment
+allowed-tools: Bash(npm:*), Bash(git:*), Bash(docker:*), Read
+argument-hint: [environment: staging|production]
+---
+
+# Deploy
+
+Deploy the project to the specified environment.
+
+## Pre-Deployment Checklist
+
+- [ ] All tests pass
+- [ ] No uncommitted changes
+- [ ] On correct branch
+- [ ] Dependencies up to date
+
+## Context
+
+- Current branch: !`git branch --show-current`
+- Git status: !`git status --short`
+- Last commit: !`git log -1 --oneline`
+
+## Environment: $ARGUMENTS
+
+### Staging Deployment
+1. Ensure on `develop` or feature branch
+2. Run build: `npm run build`
+3. Run tests: `npm test`
+4. Deploy to staging
+
+### Production Deployment
+1. Ensure on `main` branch
+2. Tag release: `git tag -a v<version> -m "Release v<version>"`
+3. Run build: `npm run build`
+4. Run tests: `npm test`
+5. Deploy to production
+6. Push tags: `git push --tags`
+
+## Post-Deployment
+- Verify deployment
+- Check health endpoints
+- Monitor for errors
+- Update documentation if needed
