@@ -1,0 +1,38 @@
+{
+  "version": "0.3.0",
+  "lastSync": "2026-01-18T13:49:05.694Z",
+  "totalSyncs": 3,
+  "lastProjectSetup": "2026-01-21T09:26:57.848Z",
+  "docHashes": {
+    "overview": "ef77fc3f5656d1735ce36ae5e28301dc",
+    "quickstart": "6bf8ae1758b04e02a60071a3b6479534",
+    "memory": "6aeda7f1460cadcb1879af9ef029e42a",
+    "settings": "ba1b857e97563e7aaa70fdc51c69c507",
+    "hooks": "d41d8cd98f00b204e9800998ecf8427e",
+    "mcp": "cd5d40a35512778977f4f1f9ba5a793d",
+    "sub-agents": "78e466b5455f7b17712cf10d7d38b713",
+    "skills": "dbeb703cbc27c0d0960e26e2915df77d",
+    "plugins": "d4034303bd68b65578a1d1c082c069b3",
+    "slash-commands": "f7e997e114ba81a97a194b6590ed4dcd",
+    "common-workflows": "9a8c2c3354ff9918f928881b79a64063",
+    "hooks-guide": "6909d630ec38966c5811d5e517f99b58",
+    "headless": "56110a7c2db609a16ccf76d0730e6634",
+    "cli-reference": "1a105c224818432337be139444437a15",
+    "troubleshooting": "b43daa8e16ea558376394f5b533cc92c",
+    "security": "1e607b049c250e7ae885dca8f6d6149b",
+    "iam": "9f0ad28e5179cfb2d0d306881d6b5b3e"
+  },
+  "description": "Claude Code knowledge base - synced from official Anthropic documentation",
+  "sources": [
+    "https://docs.anthropic.com/en/docs/claude-code/overview",
+    "https://docs.anthropic.com/en/docs/claude-code/memory",
+    "https://docs.anthropic.com/en/docs/claude-code/settings",
+    "https://docs.anthropic.com/en/docs/claude-code/hooks",
+    "https://docs.anthropic.com/en/docs/claude-code/mcp",
+    "https://docs.anthropic.com/en/docs/claude-code/sub-agents",
+    "https://docs.anthropic.com/en/docs/claude-code/skills",
+    "https://docs.anthropic.com/en/docs/claude-code/plugins",
+    "https://docs.anthropic.com/en/docs/claude-code/slash-commands",
+    "https://docs.anthropic.com/en/docs/claude-code/common-workflows"
+  ]
+}

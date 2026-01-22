@@ -1,0 +1,298 @@
+/* VS Code Theme Variables */
+:root {
+  --container-padding: 20px;
+  --input-padding: 8px 12px;
+  --border-radius: 4px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  color: var(--vscode-foreground);
+  background-color: var(--vscode-editor-background);
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: var(--container-padding);
+}
+
+header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--vscode-widget-border);
+}
+
+header h1 {
+  margin: 0 0 10px 0;
+  font-size: 1.8em;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
+header .subtitle {
+  margin: 0;
+  color: var(--vscode-descriptionForeground);
+  font-size: 1em;
+}
+
+.form-section {
+  margin-bottom: 25px;
+  padding: 20px;
+  background-color: var(--vscode-editor-inactiveSelectionBackground);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--vscode-widget-border);
+}
+
+.form-section h2 {
+  margin: 0 0 15px 0;
+  font-size: 1.1em;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: var(--vscode-foreground);
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+input[type="text"],
+textarea,
+select {
+  width: 100%;
+  padding: var(--input-padding);
+  border: 1px solid var(--vscode-input-border);
+  border-radius: var(--border-radius);
+  background-color: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input[type="text"]:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--vscode-focusBorder);
+}
+
+input[type="text"]::placeholder,
+textarea::placeholder {
+  color: var(--vscode-input-placeholderForeground);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+select {
+  cursor: pointer;
+}
+
+/* Checkbox styling */
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: var(--border-radius);
+  transition: background-color 0.2s;
+}
+
+.checkbox-label:hover {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--vscode-button-background);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.checkbox-label span {
+  font-weight: 500;
+  color: var(--vscode-foreground);
+}
+
+.checkbox-label small {
+  display: block;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.9em;
+  margin-top: 2px;
+}
+
+/* Buttons */
+.button-group {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid var(--vscode-widget-border);
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--border-radius);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+.btn-secondary {
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+.btn-icon {
+  font-size: 1.1em;
+}
+
+/* Progress area */
+.progress-area {
+  margin: 20px 0;
+  padding: 20px;
+  background-color: var(--vscode-editor-inactiveSelectionBackground);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--vscode-widget-border);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.progress-area.hidden {
+  display: none;
+}
+
+.progress-area.success {
+  border-color: var(--vscode-testing-iconPassed);
+  background-color: rgba(0, 200, 0, 0.1);
+}
+
+.progress-area.error {
+  border-color: var(--vscode-testing-iconFailed);
+  background-color: rgba(200, 0, 0, 0.1);
+}
+
+.progress-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--vscode-widget-border);
+  border-top-color: var(--vscode-button-background);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.progress-area.success .progress-spinner,
+.progress-area.error .progress-spinner {
+  display: none;
+}
+
+.progress-area.success::before {
+  content: '✓';
+  font-size: 1.5em;
+  color: var(--vscode-testing-iconPassed);
+}
+
+.progress-area.error::before {
+  content: '✗';
+  font-size: 1.5em;
+  color: var(--vscode-testing-iconFailed);
+}
+
+#progressMessage {
+  margin: 0;
+  flex: 1;
+  color: var(--vscode-foreground);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .button-group {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

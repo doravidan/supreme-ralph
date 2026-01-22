@@ -1,0 +1,85 @@
+[
+  {
+    "timestamp": "2026-01-18T13:28:59.312Z",
+    "changes": {
+      "added": [
+        "overview",
+        "quickstart",
+        "memory",
+        "settings",
+        "hooks",
+        "mcp",
+        "sub-agents",
+        "skills",
+        "plugins",
+        "slash-commands",
+        "common-workflows",
+        "hooks-guide",
+        "headless",
+        "cli-reference",
+        "troubleshooting",
+        "security",
+        "iam"
+      ],
+      "modified": [],
+      "removed": [],
+      "unchanged": []
+    }
+  },
+  {
+    "timestamp": "2026-01-18T13:32:31.021Z",
+    "changes": {
+      "added": [
+        "hooks"
+      ],
+      "modified": [],
+      "removed": [],
+      "unchanged": [
+        "overview",
+        "quickstart",
+        "memory",
+        "settings",
+        "mcp",
+        "sub-agents",
+        "skills",
+        "plugins",
+        "slash-commands",
+        "common-workflows",
+        "hooks-guide",
+        "headless",
+        "cli-reference",
+        "troubleshooting",
+        "security",
+        "iam"
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-18T13:49:05.695Z",
+    "changes": {
+      "added": [
+        "hooks"
+      ],
+      "modified": [],
+      "removed": [],
+      "unchanged": [
+        "overview",
+        "quickstart",
+        "memory",
+        "settings",
+        "mcp",
+        "sub-agents",
+        "skills",
+        "plugins",
+        "slash-commands",
+        "common-workflows",
+        "hooks-guide",
+        "headless",
+        "cli-reference",
+        "troubleshooting",
+        "security",
+        "iam"
+      ]
+    }
+  }
+]

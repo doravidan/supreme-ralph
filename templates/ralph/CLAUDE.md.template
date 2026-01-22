@@ -9,13 +9,19 @@ Read the PRD, pick the HIGHEST PRIORITY incomplete task, implement ONLY that tas
 ## Critical Rules
 
 1. **ONE TASK PER ITERATION** - You implement exactly ONE task, then exit
-2. **FRESH CONTEXT** - You have no memory of previous iterations. All context comes from:
+2. **ASK QUESTIONS WHEN UNCERTAIN** - Use the AskUserQuestion tool to clarify:
+   - Ambiguous requirements or acceptance criteria
+   - Architecture/design decisions with multiple valid approaches
+   - Unclear business logic or edge cases
+   - Technology choices not specified in the task
+   - Anything that could lead to rework if guessed wrong
+3. **FRESH CONTEXT** - You have no memory of previous iterations. All context comes from:
    - Git history (commits from previous iterations)
    - `.ralph/progress.txt` (learnings and patterns)
    - PRD file (which tasks are complete)
    - `PROJECT_SPEC.md` (comprehensive project analysis)
    - `.ralph/config.yaml` (rules and boundaries)
-3. **QUALITY GATES** - Before marking a task complete, ALL must pass:
+4. **QUALITY GATES** - Before marking a task complete, ALL must pass:
 {{#if typecheckCommand}}
    - Typecheck: `{{typecheckCommand}}`
 {{/if}}
@@ -25,8 +31,8 @@ Read the PRD, pick the HIGHEST PRIORITY incomplete task, implement ONLY that tas
 {{#if testCommand}}
    - Tests: `{{testCommand}}`
 {{/if}}
-4. **COMMIT FORMAT** - `feat: [Task-ID] - [Task Title]`
-5. **EXIT SIGNAL** - When ALL tasks are complete, output: `<promise>COMPLETE</promise>`
+5. **COMMIT FORMAT** - `feat: [Task-ID] - [Task Title]`
+6. **EXIT SIGNAL** - When ALL tasks are complete, output: `<promise>COMPLETE</promise>`
 
 ---
 
@@ -166,16 +172,37 @@ Select the HIGHEST PRIORITY task where completion status is false:
 
 Priority 1 is highest.
 
-### Step 4: Implement
+### Step 4: Clarify Requirements (if needed)
 
-Write clean, production-ready code following:
+**IMPORTANT:** Before implementing, review the task requirements. If anything is unclear or ambiguous, use the **AskUserQuestion** tool to get clarification:
+
+```
+Use AskUserQuestion when you encounter:
+- Multiple valid implementation approaches
+- Unclear acceptance criteria
+- Missing technical specifications
+- Edge cases not covered in requirements
+- Design decisions that could affect future tasks
+```
+
+Example questions to ask:
+- "Should this feature support X or Y approach?"
+- "What should happen when [edge case] occurs?"
+- "Which library/pattern should I use for this?"
+- "Should this be configurable or hardcoded?"
+
+**Do NOT guess** on important decisions - asking takes seconds, rework takes iterations.
+
+### Step 5: Implement
+
+Once requirements are clear, write clean, production-ready code following:
 - Project patterns from `PROJECT_SPEC.md`
 - Rules from `.ralph/config.yaml`
 - Learnings from `.ralph/progress.txt`
 - Existing codebase conventions
 - ALL acceptance criteria from the task
 
-### Step 5: Quality Checks
+### Step 6: Quality Checks
 
 Run ALL quality gates - they must ALL pass:
 
@@ -193,7 +220,7 @@ Run ALL quality gates - they must ALL pass:
 
 If checks fail, fix the issues before proceeding.
 
-### Step 6: Commit
+### Step 7: Commit
 
 ```bash
 git add -A
@@ -205,14 +232,14 @@ git commit -m "feat: [TASK-ID] - [Task Title]
 Co-Authored-By: RALPH <noreply@anthropic.com>"
 ```
 
-### Step 7: Update PRD
+### Step 8: Update PRD
 
 Mark the completed task:
 - **JSON:** Set `passes: true` for the task
 - **Markdown:** Change `- [ ]` to `- [x]`
 - **YAML:** Set `completed: true`
 
-### Step 8: Log Progress
+### Step 9: Log Progress
 
 Append to `.ralph/progress.txt`:
 ```markdown
@@ -226,7 +253,7 @@ Append to `.ralph/progress.txt`:
 ---
 ```
 
-### Step 9: Check Completion
+### Step 10: Check Completion
 
 If ALL tasks have completion status = true:
 ```
@@ -252,6 +279,7 @@ For detailed project context, read `PROJECT_SPEC.md`.
 
 ## Important Reminders
 
+- **ASK WHEN UNCERTAIN** - Use AskUserQuestion tool for any ambiguity - don't guess
 - **ONE TASK** - Complete exactly one task per iteration
 - **QUALITY FIRST** - All quality gates must pass before marking complete
 - **FOLLOW RULES** - Rules from config.yaml are mandatory
@@ -260,4 +288,4 @@ For detailed project context, read `PROJECT_SPEC.md`.
 - **CLEAN COMMITS** - Write descriptive commit messages
 - **EXIT CLEANLY** - Don't hang, don't loop, complete and exit
 
-Remember: You are ONE instance in a loop. Do your ONE task well, commit, and exit.
+Remember: You are ONE instance in a loop. Do your ONE task well, commit, and exit. **Ask questions early** - it's faster than rework.

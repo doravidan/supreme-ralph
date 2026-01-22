@@ -1,0 +1,186 @@
+{
+  "name": "claude-code-init",
+  "displayName": "Claude Code Project Initializer",
+  "description": "VS Code UI for initializing projects with Claude Code best practices and configuration",
+  "version": "1.0.0",
+  "publisher": "claude-init",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Snippets"
+  ],
+  "keywords": [
+    "claude",
+    "ai",
+    "scaffold",
+    "initialization",
+    "project-setup",
+    "configuration"
+  ],
+  "activationEvents": [
+    "workspaceContains:.claude",
+    "workspaceContains:CLAUDE.md"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "claudeInit.setupProject",
+        "title": "Setup Project",
+        "category": "Claude Code",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "claudeInit.quickSetup",
+        "title": "Quick Setup (Use Defaults)",
+        "category": "Claude Code",
+        "icon": "$(zap)"
+      },
+      {
+        "command": "claudeInit.syncKnowledge",
+        "title": "Sync Knowledge Base",
+        "category": "Claude Code",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "claudeInit.checkUpdates",
+        "title": "Check for Updates",
+        "category": "Claude Code",
+        "icon": "$(bell)"
+      },
+      {
+        "command": "claudeInit.validateTemplates",
+        "title": "Validate Templates",
+        "category": "Claude Code",
+        "icon": "$(check)"
+      },
+      {
+        "command": "claudeInit.viewChanges",
+        "title": "View Changelog",
+        "category": "Claude Code",
+        "icon": "$(history)"
+      },
+      {
+        "command": "claudeInit.openWizard",
+        "title": "Open Setup Wizard",
+        "category": "Claude Code",
+        "icon": "$(window)"
+      },
+      {
+        "command": "claudeInit.refreshViews",
+        "title": "Refresh",
+        "category": "Claude Code",
+        "icon": "$(refresh)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "claudeCodeExplorer",
+          "title": "Claude Code",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "claudeCodeExplorer": [
+        {
+          "id": "claudeInit.projectStatus",
+          "name": "Project Status"
+        },
+        {
+          "id": "claudeInit.templates",
+          "name": "Templates"
+        },
+        {
+          "id": "claudeInit.actions",
+          "name": "Quick Actions"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "claudeInit.projectStatus",
+        "contents": "No Claude Code configuration found.\n[Setup Project](command:claudeInit.setupProject)\n[Quick Setup](command:claudeInit.quickSetup)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "claudeInit.refreshViews",
+          "when": "view == claudeInit.projectStatus || view == claudeInit.templates",
+          "group": "navigation"
+        },
+        {
+          "command": "claudeInit.setupProject",
+          "when": "view == claudeInit.projectStatus",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "claudeInit.openWizard",
+          "when": "viewItem == setupAction",
+          "group": "inline"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "claudeInit.setupProject",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "claudeInit.quickSetup",
+          "when": "workspaceFolderCount > 0"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "claudeInit.setupProject",
+        "key": "ctrl+shift+c",
+        "mac": "cmd+shift+c",
+        "when": "workspaceFolderCount > 0"
+      }
+    ],
+    "configuration": {
+      "title": "Claude Code Initializer",
+      "properties": {
+        "claudeInit.scriptsPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to claude-init scripts directory (leave empty for bundled scripts)"
+        },
+        "claudeInit.autoSync": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically sync knowledge base on extension activation"
+        },
+        "claudeInit.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show Claude Code status in the status bar"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "node esbuild.config.js",
+    "watch": "node esbuild.config.js --watch",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "esbuild": "^0.19.8",
+    "eslint": "^8.55.0",
+    "typescript": "^5.3.2"
+  },
+  "dependencies": {}
+}
