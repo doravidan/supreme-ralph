@@ -1,0 +1,42 @@
+# RALPH Configuration for supreme-ralph
+# Generated: 2026-01-22
+
+# Project metadata
+project:
+  name: supreme-ralph
+  version: 2.0.0
+  language: javascript
+  framework: node-cli
+
+# Rules for RALPH to follow
+rules:
+  - "Follow patterns in PROJECT_SPEC.md and CLAUDE.md"
+  - "Use ES Modules exclusively (import/export)"
+  - "Use fs-extra for all file operations"
+  - "Use chalk for colored output, ora for spinners"
+  - "Handle errors gracefully with user-friendly messages"
+  - "Use AskUserQuestion for any ambiguity - do not guess"
+
+# Directories RALPH should never modify
+boundaries:
+  never_touch:
+    - "node_modules/**"
+    - "knowledge-base/**"
+    - "*.lock"
+    - ".git/**"
+    - "coverage/**"
+
+# Quality gate commands
+commands:
+  # No typecheck - this is a JavaScript project
+  lint: "npm run validate"
+  test: "npm test"
+  build: ""
+
+# RALPH execution settings
+settings:
+  max_iterations: 10
+  commit_after_each_story: true
+  run_tests_before_commit: true
+  compact_after_each_story: true
+  compact_threshold: 60

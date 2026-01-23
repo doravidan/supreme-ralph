@@ -1,22 +1,25 @@
-# Project Specification: claude-init
+# Project Specification: supreme-ralph
 
-> Generated: 2026-01-21
-> Version: 1.0.0
+> Generated: 2026-01-22
+> Version: 2.0.0
 > Analyzed by: Deep Project Analysis
 
 ## Overview
 
-**claude-init** is a comprehensive CLI tool for scaffolding projects with Claude Code best practices. It provides intelligent project analysis, autonomous development via RALPH, news aggregation for Claude/Anthropic updates, and a complete template system for customizing project configurations.
+**supreme-ralph** (formerly claude-init) is a global Claude Code extension that provides autonomous development capabilities via RALPH. After a one-time global installation to `~/.claude/`, all features are available as slash commands in any project.
+
+**Key Change in v2.0.0:** Pure slash command experience - no CLI tool needed after installation. Everything works through Claude Code's native skill system.
 
 ### Key Capabilities
 
-1. **Interactive Project Setup** - Analyze and configure any project for Claude Code
-2. **RALPH Autonomous Agent** - Implement features from PRD specifications automatically
-3. **Deep Project Analysis** - Understand codebase structure, patterns, and conventions
-4. **News Aggregation** - Track Claude/Anthropic updates from 11+ sources
-5. **Knowledge Base Sync** - Keep Anthropic documentation up-to-date locally
-6. **Template System** - Customizable configurations with variable substitution
-7. **VSCode Extension** - GUI for project initialization
+1. **Global Installation** - One-time setup to `~/.claude/` that works everywhere
+2. **Interactive Project Setup** - `/setup-project` uses AskUserQuestion for 6-8 configuration questions
+3. **RALPH Autonomous Agent** - `/ralph-run` implements features from PRD specifications automatically
+4. **PRD Generation** - `/prd` creates intelligent, context-aware PRDs from feature descriptions
+5. **Deep Project Analysis** - Understand codebase structure, patterns, and conventions
+6. **Code Review** - `/code-review` for comprehensive code quality analysis
+7. **News Aggregation** - Track Claude/Anthropic updates from 11+ sources
+8. **Knowledge Base Sync** - Keep Anthropic documentation up-to-date locally
 
 ---
 
@@ -42,9 +45,10 @@
 ## Architecture
 
 ```
-claude-init/
-├── bin/                           # CLI Entry Point
-│   └── claude-init.js             # Main CLI with all commands
+supreme-ralph/
+├── bin/                           # CLI Entry Points
+│   ├── supreme-ralph.js           # Global installation CLI (npx supreme-ralph install)
+│   └── claude-init.js             # Legacy CLI with all commands
 │
 ├── scripts/                       # Core Scripts
 │   ├── setup-project.js           # Project initialization (main feature)
@@ -61,6 +65,7 @@ claude-init/
 │   ├── setup-scheduler.js         # Setup automatic syncing
 │   ├── validate-templates.js      # Validate template files
 │   ├── post-install.js            # Post-install hook
+│   ├── install-global.js          # Global installation to ~/.claude/
 │   │
 │   ├── ralph/                     # RALPH Agent Files
 │   │   ├── ralph.sh               # RALPH bash loop script
@@ -83,42 +88,37 @@ claude-init/
 │       └── email-sender.js        # Resend API integration
 │
 ├── templates/                     # Project Scaffolding Templates
+│   ├── global/                    # Global installation templates (→ ~/.claude/)
+│   │   ├── skills/                # Global skills (available everywhere)
+│   │   │   ├── setup-project/SKILL.md   # /setup-project - Interactive project setup
+│   │   │   ├── ralph/SKILL.md           # /ralph - Status, validate, reset, analyze
+│   │   │   ├── ralph-run/SKILL.md       # /ralph-run - RALPH execution loop
+│   │   │   ├── prd/SKILL.md             # /prd - PRD generation
+│   │   │   └── code-review/SKILL.md     # /code-review - Code quality analysis
+│   │   ├── commands/              # Global commands
+│   │   │   ├── commit.md
+│   │   │   ├── review.md
+│   │   │   ├── test.md
+│   │   │   └── deploy.md
+│   │   ├── agents/                # Global agents
+│   │   │   ├── code-reviewer.md
+│   │   │   ├── debugger.md
+│   │   │   └── researcher.md
+│   │   └── rules/                 # Global rules
+│   │       ├── code-style.md
+│   │       ├── security.md
+│   │       └── javascript-style.md
+│   │
 │   ├── CLAUDE.md.template         # Main project prompt
 │   ├── CLAUDE.local.md.template   # Local project prompt
-│   ├── rules/                     # Code style rules
-│   │   ├── code-style.md.template
-│   │   ├── security.md.template
-│   │   ├── testing.md.template
-│   │   └── documentation.md.template
-│   ├── commands/                  # Slash commands
-│   │   ├── review.md.template
-│   │   ├── test.md.template
-│   │   ├── commit.md.template
-│   │   └── deploy.md.template
-│   ├── agents/                    # Custom agents
-│   │   ├── code-reviewer.md.template
-│   │   ├── debugger.md.template
-│   │   └── researcher.md.template
-│   ├── skills/                    # Agent skills
-│   │   └── code-review/SKILL.md.template
+│   ├── rules/                     # Per-project rules templates
+│   ├── commands/                  # Per-project command templates
+│   ├── agents/                    # Per-project agent templates
+│   ├── skills/                    # Per-project skill templates
 │   ├── hooks/                     # Hook scripts
-│   │   ├── hooks.json.template
-│   │   ├── auto-compact.sh
-│   │   └── auto-compact.js
 │   ├── settings/                  # Settings templates
-│   │   ├── settings.json.template
-│   │   └── settings.local.json.template
 │   ├── mcp/                       # MCP configuration
-│   │   └── .mcp.json.template
-│   └── ralph/                     # RALPH templates
-│       ├── CLAUDE.md.template
-│       ├── ralph.sh.template
-│       ├── progress.txt.template
-│       ├── prd.json.example
-│       └── skills/
-│           ├── prd/SKILL.md
-│           ├── ralph/SKILL.md
-│           └── ralph-run/SKILL.md
+│   └── ralph/                     # RALPH templates (legacy)
 │
 ├── .claude/                       # Claude Code Configuration
 │   ├── settings.json              # Permissions and environment
@@ -156,7 +156,44 @@ claude-init/
 
 ---
 
-## CLI Commands
+## Installation
+
+### Global Installation (Recommended)
+
+```bash
+# One-time global installation
+npx supreme-ralph install
+
+# Or with auto-confirmation
+npx supreme-ralph install -y
+```
+
+This installs all skills, commands, agents, and rules to `~/.claude/` for global availability.
+
+---
+
+## Slash Commands (After Global Installation)
+
+After installation, these slash commands are available in **any project**:
+
+| Command | Description |
+|---------|-------------|
+| `/setup-project` | Interactive project setup with 6-8 questions |
+| `/ralph` | RALPH status, validate, reset, analyze |
+| `/ralph-run` | Start RALPH autonomous development |
+| `/ralph-run 20` | Run with 20 iterations |
+| `/prd [feature]` | Generate PRD from feature description |
+| `/code-review` | Run comprehensive code review |
+| `/commit` | Create git commit with formatted message |
+| `/review` | Review code changes |
+| `/test` | Run tests |
+| `/deploy` | Deploy to environment |
+
+---
+
+## Legacy CLI Commands
+
+The legacy CLI (`claude-init`) is still available for advanced operations:
 
 ### `claude-init setup`
 Initialize or configure a project for Claude Code.
@@ -167,69 +204,16 @@ claude-init setup [options]
   -m, --merge                  # Merge with existing config
   -y, --yes                    # Skip prompts, use defaults
   -f, --feature <description>  # Create initial PRD for RALPH
-  --no-ralph                   # Skip RALPH setup
-  --no-hooks                   # Skip hooks setup
-  --no-agents                  # Skip agents setup
-  --no-commands                # Skip commands setup
-  --no-rules                   # Skip rules setup
-  --no-skills                  # Skip skills setup
-```
-
-### `claude-init ralph`
-Run RALPH autonomous development agent.
-
-```bash
-claude-init ralph [max-iterations] [options]
-  -t, --target <path>          # Target directory
-  --init                       # Initialize RALPH in project
-  --status                     # Show PRD completion status
-  --reset                      # Reset progress.txt
-  --analyze                    # Re-analyze project
 ```
 
 ### `claude-init sync`
 Sync knowledge base from Anthropic documentation.
 
-```bash
-claude-init sync
-```
-
 ### `claude-init news`
 Fetch Claude/Anthropic news from multiple sources.
 
-```bash
-claude-init news [options]
-  -r, --refresh                # Force refresh from sources
-  -j, --json                   # Output as JSON
-  -s, --stats                  # Show statistics
-  -l, --limit <number>         # Max items (default: 10)
-  -c, --category <category>    # Filter by category
-  -t, --text                   # Plain text format
-```
-
 ### `claude-init projects`
 List all tracked projects.
-
-```bash
-claude-init projects [options]
-  --status <status>            # Filter: active|archived|orphaned
-  --language <language>        # Filter by language
-  --json                       # Output as JSON
-  --validate                   # Validate all paths
-```
-
-### Other Commands
-
-| Command | Description |
-|---------|-------------|
-| `claude-init check` | Check for knowledge base updates |
-| `claude-init changes` | View changelog since last setup |
-| `claude-init templates` | List available templates |
-| `claude-init validate` | Validate template files |
-| `claude-init email` | Send newsletter (--test, --dry-run) |
-| `claude-init scheduler` | Setup automatic syncing |
-| `claude-init untrack <path>` | Remove project from tracking |
-| `claude-init status [path]` | Show project status |
 
 ---
 
@@ -257,18 +241,18 @@ When running `claude-init setup`, the tool:
 
 ### 2. RALPH Autonomous Development
 
-RALPH (Recursive Autonomous LLM Pull-based Handler) implements features automatically:
+RALPH (Recursive Autonomous Loop for Production Harmony) implements features automatically via `/ralph-run`:
 
 **Workflow:**
 1. Load `prd.json` with user stories
 2. Select highest-priority incomplete story
-3. Generate context-aware prompt
-4. Call Claude API for implementation
+3. **Use AskUserQuestion for any ambiguity** (critical!)
+4. Implement the story following project patterns
 5. Run quality gates (typecheck, lint, tests)
 6. Commit changes if all pass
 7. Update story status in prd.json
-8. Log to progress.txt
-9. Repeat until complete
+8. Log to `.ralph/progress.txt`
+9. Repeat until all stories complete or max iterations reached
 
 **PRD Structure:**
 ```json
@@ -322,23 +306,24 @@ Sources tracked (11 total):
 - Product, Research, Business, Viral
 - Community, Tutorial, Opinion, Changelog
 
-### 5. Skills System
+### 5. Global Skills System
 
-Skills are reusable capabilities located in `.claude/skills/*/SKILL.md`:
+Skills are installed globally to `~/.claude/skills/*/SKILL.md` and available in any project:
 
-| Skill | Purpose |
-|-------|---------|
-| `/code-review` | Review code for quality and best practices |
-| `/prd` | Generate PRD from feature description |
-| `/ralph` | Convert PRD markdown to prd.json |
-| `/ralph-run` | Execute RALPH autonomous loop |
+| Skill | Trigger | Purpose |
+|-------|---------|---------|
+| `/setup-project` | New project setup | Interactive 6-8 question project configuration |
+| `/ralph` | Management | PRD status, validation, reset, re-analysis |
+| `/ralph-run` | Execution | Autonomous development loop with AskUserQuestion |
+| `/prd` | PRD creation | Generate intelligent PRD from feature description |
+| `/code-review` | Quality | Review code for best practices and issues |
 
 **Skill Format:**
 ```markdown
 ---
 name: skill-name
 description: What the skill does
-allowed-tools: Read, Edit, Write, Bash
+allowed-tools: Read, Edit, Write, Bash, AskUserQuestion
 ---
 
 # Skill Title
@@ -346,6 +331,8 @@ allowed-tools: Read, Edit, Write, Bash
 ## Process
 Steps to execute...
 ```
+
+**Key Feature:** Skills use `AskUserQuestion` tool for interactive clarification instead of guessing.
 
 ---
 

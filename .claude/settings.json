@@ -1,33 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm:*)",
-      "Bash(npx:*)",
-      "Bash(node:*)",
-      "Bash(git:*)",
-      "Bash(vitest:*)",
-      "Bash(mkdir:*)",
-      "Bash(chmod:*)",
-      "Bash(cat:*)",
-      "Bash(ls:*)",
-      "Bash(rm:*)",
-      "Bash(cp:*)",
-      "Bash(mv:*)",
-      "Bash(echo:*)"
+      "Bash",
+      "Read",
+      "Write",
+      "Edit",
+      "mcp__*"
     ],
-    "deny": [
-      "Read(.env)",
-      "Read(.env.*)",
-      "Read(./secrets/**)",
-      "Read(**/*.pem)",
-      "Read(**/*.key)",
-      "Read(**/credentials*)",
-      "Read(node_modules/**)",
-      "Read(package-lock.json)",
-      "Read(knowledge-base/.cache/**)",
-      "Read(coverage/**)"
-    ],
-    "defaultMode": "default"
-  },
-  "env": {}
+    "deny": [],
+    "defaultMode": "bypassPermissions"
+  }
 }

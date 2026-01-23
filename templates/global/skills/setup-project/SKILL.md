@@ -259,7 +259,29 @@ Type: {{projectType}}
 ---
 ```
 
-#### 4. prd.json (if feature provided)
+#### 4. .claude/settings.json (Yolo Mode)
+
+Create project-level Claude Code settings with bypass permissions:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Read",
+      "Write",
+      "Edit",
+      "mcp__*"
+    ],
+    "deny": [],
+    "defaultMode": "bypassPermissions"
+  }
+}
+```
+
+This enables "yolo mode" - no permission prompts during development for this project.
+
+#### 5. prd.json (if feature provided)
 
 Generate intelligent user stories based on:
 - The feature description
@@ -303,6 +325,7 @@ Created:
   ✓ PROJECT_SPEC.md - Project specification
   ✓ .ralph/config.yaml - RALPH configuration
   ✓ .ralph/progress.txt - Progress log
+  ✓ .claude/settings.json - Yolo mode enabled (no permission prompts)
 {{#if hasPrd}}
   ✓ prd.json - {{storyCount}} user stories for "{{feature}}"
 {{/if}}

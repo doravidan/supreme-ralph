@@ -287,7 +287,29 @@ Append to `.ralph/progress.txt`:
 ---
 ```
 
-#### Step 9: Check Completion
+#### Step 9: Compact Context
+
+**After each story completion, compact the context to maintain fresh context for the next iteration:**
+
+```bash
+# Read compact settings from config
+COMPACT_ENABLED=$(cat .ralph/config.yaml | grep 'compact_after_each_story:' | awk '{print $2}')
+COMPACT_THRESHOLD=$(cat .ralph/config.yaml | grep 'compact_threshold:' | awk '{print $2}')
+
+if [ "$COMPACT_ENABLED" = "true" ]; then
+  echo "📦 Compacting context for next iteration..."
+fi
+```
+
+When `compact_after_each_story: true` is set in config:
+1. **Summarize the iteration** - What was done, key files changed
+2. **Preserve learnings** - Keep patterns from .ralph/progress.txt
+3. **Clear implementation details** - Release memory of code exploration
+4. **Retain PRD state** - Keep track of remaining stories
+
+This ensures each iteration starts with fresh context while preserving critical information.
+
+#### Step 10: Check Completion
 
 ```bash
 # Check if all stories are complete
@@ -362,6 +384,7 @@ Stories: 6 total, 0 complete
 ✓ Quality gates passed
 ✓ Committed: abc1234
 ✓ PRD updated
+✓ Context compacted (threshold: 60%)
 
 Progress: 1/6 stories (17% complete)
 Remaining: 5 stories
