@@ -195,10 +195,12 @@ describe('news-aggregator', () => {
     });
 
     it('should handle HTTP errors gracefully', async () => {
+      // Use 404 which is NOT in the retry list (500, 502, 503, 504, 408, 429 are retried)
       mockFetch.mockResolvedValue({
         ok: false,
-        status: 500,
-        statusText: 'Internal Server Error'
+        status: 404,
+        statusText: 'Not Found',
+        text: async () => 'Not found'
       });
 
       // Should not throw
@@ -208,15 +210,26 @@ describe('news-aggregator', () => {
     });
 
     it('should handle timeout gracefully', async () => {
+      // Use fake timers to avoid actual delays during retries
+      vi.useFakeTimers();
+
       mockFetch.mockImplementation(() => {
         const error = new Error('Aborted');
         error.name = 'AbortError';
         return Promise.reject(error);
       });
 
-      const news = await aggregateNews({ forceRefresh: true, limit: 10 });
+      // Start the aggregation and advance timers
+      const newsPromise = aggregateNews({ forceRefresh: true, limit: 10 });
+
+      // Advance timers to complete all retry delays (1s + 2s + 4s = 7s)
+      await vi.advanceTimersByTimeAsync(10000);
+
+      const news = await newsPromise;
 
       expect(Array.isArray(news)).toBe(true);
+
+      vi.useRealTimers();
     });
   });
 

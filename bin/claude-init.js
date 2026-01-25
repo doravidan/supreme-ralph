@@ -188,6 +188,8 @@ program
   .option('--init', 'Initialize RALPH in a project')
   .option('--status', 'Show current PRD status')
   .option('--reset', 'Reset progress.txt for fresh start')
+  .option('--validate', 'Validate prd.json schema')
+  .option('--analyze', 'Re-analyze project and regenerate PROJECT_SPEC.md')
   .action((maxIterations, options) => {
     const args = [];
     if (maxIterations) args.push(maxIterations);
@@ -195,8 +197,93 @@ program
     if (options.init) args.push('--init');
     if (options.status) args.push('--status');
     if (options.reset) args.push('--reset');
+    if (options.validate) args.push('--validate');
+    if (options.analyze) args.push('--analyze');
 
     spawn('node', [path.join(scriptsDir, 'run-ralph.js'), ...args], {
+      stdio: 'inherit'
+    });
+  });
+
+program
+  .command('parallel [max-concurrent]')
+  .description('Run RALPH with parallel story execution')
+  .option('-t, --target <path>', 'Target project directory', process.cwd())
+  .option('-m, --max-iterations <number>', 'Max iterations per story', '10')
+  .action((maxConcurrent, options) => {
+    const args = [];
+    if (maxConcurrent) args.push(maxConcurrent);
+
+    spawn('node', [path.join(scriptsDir, 'ralph', 'parallel-ralph.js'), ...args], {
+      cwd: options.target,
+      stdio: 'inherit'
+    });
+  });
+
+program
+  .command('qa [max-iterations]')
+  .description('Run QA validation loop')
+  .option('-t, --target <path>', 'Target project directory', process.cwd())
+  .option('-s, --story <id>', 'Story ID context')
+  .action((maxIterations, options) => {
+    const args = [];
+    if (maxIterations) args.push(maxIterations);
+    if (options.story) args.push(options.story);
+
+    spawn('node', [path.join(scriptsDir, 'qa', 'qa-loop.js'), ...args], {
+      cwd: options.target,
+      stdio: 'inherit'
+    });
+  });
+
+program
+  .command('worktree <action> [story-id]')
+  .description('Manage git worktrees for stories (create, list, remove, cleanup)')
+  .option('-t, --target <path>', 'Target project directory', process.cwd())
+  .option('-f, --force', 'Force operation')
+  .option('--delete-branch', 'Also delete branch when removing')
+  .action((action, storyId, options) => {
+    const args = [action];
+    if (storyId) args.push(storyId);
+    if (options.force) args.push('--force');
+    if (options.deleteBranch) args.push('--delete-branch');
+
+    spawn('node', [path.join(scriptsDir, 'cli', 'worktree-cli.js'), ...args], {
+      cwd: options.target,
+      stdio: 'inherit'
+    });
+  });
+
+program
+  .command('memory <action>')
+  .description('Manage RALPH memory (search, stats, export, clear)')
+  .option('-t, --target <path>', 'Target project directory', process.cwd())
+  .option('-q, --query <text>', 'Search query')
+  .option('--type <type>', 'Filter by type (pattern, gotcha, insight)')
+  .action((action, options) => {
+    const args = [action];
+    if (options.query) args.push('--query', options.query);
+    if (options.type) args.push('--type', options.type);
+
+    spawn('node', [path.join(scriptsDir, 'cli', 'memory-cli.js'), ...args], {
+      cwd: options.target,
+      stdio: 'inherit'
+    });
+  });
+
+program
+  .command('prd <action>')
+  .description('PRD management (generate, validate, status)')
+  .option('-t, --target <path>', 'Target project directory', process.cwd())
+  .option('-p, --prompt <text>', 'Feature prompt for generation')
+  .option('--smart', 'Use smart PRD generator with clarifying questions')
+  .action((action, options) => {
+    const args = [action];
+    if (options.prompt) args.push('--prompt', options.prompt);
+    if (options.smart) args.push('--smart');
+
+    spawn('node', [path.join(scriptsDir, 'cli', 'prd-cli.js'), ...args], {
+      cwd: options.target,
       stdio: 'inherit'
     });
   });

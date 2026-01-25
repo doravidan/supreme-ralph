@@ -42,11 +42,11 @@ export class TemplateEngine {
 
     let result = template;
 
-    // Process conditionals first (they may contain variables)
-    result = this._processConditionals(result, context);
-
-    // Process loops
+    // Process loops FIRST so @index, @first, @last are available for inner conditionals
     result = this._processLoops(result, context);
+
+    // Process conditionals (now loop variables are resolved)
+    result = this._processConditionals(result, context);
 
     // Process simple variable substitutions
     result = this._processVariables(result, context);
@@ -59,7 +59,8 @@ export class TemplateEngine {
    */
   _processConditionals(template, context) {
     // Match {{#if condition}}...{{else}}...{{/if}} with optional else
-    const ifRegex = /\{\{#if\s+(\w+(?:\.\w+)*)\}\}([\s\S]*?)(?:\{\{else\}\}([\s\S]*?))?\{\{\/if\}\}/g;
+    // Supports @-prefixed loop variables like @first, @last
+    const ifRegex = /\{\{#if\s+(@?\w+(?:\.\w+)*)\}\}([\s\S]*?)(?:\{\{else\}\}([\s\S]*?))?\{\{\/if\}\}/g;
 
     return template.replace(ifRegex, (match, condition, ifContent, elseContent = '') => {
       const value = this._getValue(context, condition);
@@ -75,48 +76,99 @@ export class TemplateEngine {
 
   /**
    * Process {{#each items}}...{{/each}} blocks
+   * Handles nested loops correctly by matching opening/closing tags
    */
   _processLoops(template, context) {
-    // Match {{#each items}}...{{/each}}
-    const eachRegex = /\{\{#each\s+(\w+(?:\.\w+)*)\}\}([\s\S]*?)\{\{\/each\}\}/g;
+    // Find outermost {{#each}} blocks and process them
+    let result = template;
+    let match;
 
-    return template.replace(eachRegex, (match, arrayPath, loopContent) => {
+    // Keep processing until no more {{#each}} blocks are found
+    while ((match = result.match(/\{\{#each\s+(\w+(?:\.\w+)*)\}\}/)) !== null) {
+      const startIndex = match.index;
+      const arrayPath = match[1];
+      const openTagEnd = startIndex + match[0].length;
+
+      // Find the matching {{/each}} by counting nesting levels
+      let depth = 1;
+      let searchIndex = openTagEnd;
+      let closeIndex = -1;
+
+      while (depth > 0 && searchIndex < result.length) {
+        const nextOpen = result.indexOf('{{#each', searchIndex);
+        const nextClose = result.indexOf('{{/each}}', searchIndex);
+
+        if (nextClose === -1) {
+          // No closing tag found
+          break;
+        }
+
+        if (nextOpen !== -1 && nextOpen < nextClose) {
+          // Found another opening tag before closing
+          depth++;
+          searchIndex = nextOpen + 7; // Move past {{#each
+        } else {
+          // Found closing tag
+          depth--;
+          if (depth === 0) {
+            closeIndex = nextClose;
+          }
+          searchIndex = nextClose + 9; // Move past {{/each}}
+        }
+      }
+
+      if (closeIndex === -1) {
+        // Unmatched {{#each}}, skip processing
+        if (this.warnOnMissing) {
+          console.warn(`[template-engine] Unmatched {{#each ${arrayPath}}}`);
+        }
+        break;
+      }
+
+      // Extract the loop content (between opening and closing tags)
+      const loopContent = result.substring(openTagEnd, closeIndex);
       const items = this._getValue(context, arrayPath);
 
+      let replacement = '';
       if (!Array.isArray(items)) {
         if (this.warnOnMissing) {
           console.warn(`[template-engine] Expected array for {{#each ${arrayPath}}}, got ${typeof items}`);
         }
-        return '';
+      } else {
+        replacement = items.map((item, index) => {
+          // Create loop context with item, index, and parent context
+          const loopContext = {
+            ...context,
+            this: item,
+            '@index': index,
+            '@first': index === 0,
+            '@last': index === items.length - 1
+          };
+
+          // If item is an object, spread its properties too
+          if (item && typeof item === 'object' && !Array.isArray(item)) {
+            Object.assign(loopContext, item);
+          }
+
+          // Recursively process the loop content
+          return this.render(loopContent, loopContext);
+        }).join('');
       }
 
-      return items.map((item, index) => {
-        // Create loop context with item, index, and parent context
-        const loopContext = {
-          ...context,
-          this: item,
-          '@index': index,
-          '@first': index === 0,
-          '@last': index === items.length - 1
-        };
+      // Replace the entire {{#each}}...{{/each}} block
+      result = result.substring(0, startIndex) + replacement + result.substring(closeIndex + 9);
+    }
 
-        // If item is an object, spread its properties too
-        if (item && typeof item === 'object' && !Array.isArray(item)) {
-          Object.assign(loopContext, item);
-        }
-
-        // Recursively process the loop content
-        return this.render(loopContent, loopContext);
-      }).join('');
-    });
+    return result;
   }
 
   /**
    * Process {{variable}} substitutions
    */
   _processVariables(template, context) {
-    // Match {{variable}} or {{variable.nested.path}}
-    const varRegex = /\{\{(\w+(?:\.\w+)*)\}\}/g;
+    // Match {{variable}} or {{variable.nested.path}} or {{@index}}
+    // Supports @-prefixed loop variables like @index, @first, @last
+    const varRegex = /\{\{(@?\w+(?:\.\w+)*)\}\}/g;
     const missingVars = [];
 
     const result = template.replace(varRegex, (match, varPath) => {
@@ -190,8 +242,8 @@ export class TemplateEngine {
     const loops = new Set();
     const errors = [];
 
-    // Find all variable references
-    const varRegex = /\{\{(\w+(?:\.\w+)*)\}\}/g;
+    // Find all variable references (including @-prefixed loop variables)
+    const varRegex = /\{\{(@?\w+(?:\.\w+)*)\}\}/g;
     let match;
     while ((match = varRegex.exec(template)) !== null) {
       const varName = match[1];
@@ -200,10 +252,13 @@ export class TemplateEngine {
       }
     }
 
-    // Find conditionals
-    const ifRegex = /\{\{#if\s+(\w+(?:\.\w+)*)\}\}/g;
+    // Find conditionals (including @-prefixed loop variables)
+    const ifRegex = /\{\{#if\s+(@?\w+(?:\.\w+)*)\}\}/g;
     while ((match = ifRegex.exec(template)) !== null) {
-      conditionals.add(match[1].split('.')[0]);
+      const condName = match[1];
+      if (!condName.startsWith('@')) {
+        conditionals.add(condName.split('.')[0]);
+      }
     }
 
     // Find loops

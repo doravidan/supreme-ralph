@@ -86,6 +86,7 @@ describe('project-analyzer', () => {
     await fs.writeFile(path.join(tempDir, 'README.md'), '# Test React App\n\nA sample React application for testing.');
     await fs.writeFile(path.join(tempDir, '.eslintrc.json'), '{}');
     await fs.writeFile(path.join(tempDir, '.prettierrc'), '{}');
+    await fs.writeFile(path.join(tempDir, 'package-lock.json'), '{}');
 
     return tempDir;
   }

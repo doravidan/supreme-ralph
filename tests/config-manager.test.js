@@ -32,7 +32,7 @@ describe('config-manager', () => {
   describe('CONFIG defaults', () => {
     it('should have correct default compact threshold', async () => {
       const { CONFIG } = await import('../scripts/utils/config-manager.js');
-      expect(CONFIG.compact.threshold).toBe(70);
+      expect(CONFIG.compact.threshold).toBe(50); // 50% recommended for RALPH
     });
 
     it('should have correct default max context tokens', async () => {
@@ -83,14 +83,14 @@ describe('config-manager', () => {
     it('should handle invalid number gracefully', async () => {
       process.env.COMPACT_THRESHOLD = 'invalid';
       const { CONFIG } = await import('../scripts/utils/config-manager.js');
-      expect(CONFIG.compact.threshold).toBe(70); // Falls back to default
+      expect(CONFIG.compact.threshold).toBe(50); // Falls back to default
     });
   });
 
   describe('getConfig helper', () => {
     it('should get nested config value', async () => {
       const { getConfig } = await import('../scripts/utils/config-manager.js');
-      expect(getConfig('compact.threshold')).toBe(70);
+      expect(getConfig('compact.threshold')).toBe(50);
     });
 
     it('should get deeply nested config value', async () => {
@@ -113,7 +113,7 @@ describe('config-manager', () => {
     it('should return flattened config object', async () => {
       const { getFlatConfig } = await import('../scripts/utils/config-manager.js');
       const flat = getFlatConfig();
-      expect(flat['compact.threshold']).toBe(70);
+      expect(flat['compact.threshold']).toBe(50);
       expect(flat['news.cacheTtl']).toBe(2 * 60 * 60 * 1000);
       expect(flat['http.retries']).toBe(3);
     });

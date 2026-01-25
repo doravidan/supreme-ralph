@@ -338,7 +338,8 @@ async function detectTechStack(targetPath) {
   };
 
   // Check for language indicators
-  const hasPackageJson = await fs.pathExists(path.join(targetPath, 'package.json'));
+  const packageJsonPath = path.join(targetPath, 'package.json');
+  const hasPackageJson = await fs.pathExists(packageJsonPath);
   const hasTsConfig = await fs.pathExists(path.join(targetPath, 'tsconfig.json'));
   const hasJsConfig = await fs.pathExists(path.join(targetPath, 'jsconfig.json'));
   const hasPyProject = await fs.pathExists(path.join(targetPath, 'pyproject.toml'));
@@ -347,10 +348,21 @@ async function detectTechStack(targetPath) {
   const hasCargoToml = await fs.pathExists(path.join(targetPath, 'Cargo.toml'));
   const hasCsproj = (await fs.readdir(targetPath)).some(f => f.endsWith('.csproj'));
 
-  // Determine language
+  // Check if package.json is valid JSON (not corrupted)
+  let hasValidPackageJson = false;
+  if (hasPackageJson) {
+    try {
+      await fs.readJson(packageJsonPath);
+      hasValidPackageJson = true;
+    } catch (e) {
+      logger.debug(`Invalid package.json: ${e.message}`, { path: packageJsonPath });
+    }
+  }
+
+  // Determine language (only trust valid package.json)
   if (hasTsConfig) {
     techStack.language = 'typescript';
-  } else if (hasPackageJson || hasJsConfig) {
+  } else if (hasValidPackageJson || hasJsConfig) {
     techStack.language = 'javascript';
   } else if (hasPyProject || hasRequirementsTxt) {
     techStack.language = 'python';
