@@ -1,6 +1,16 @@
-# claude-init
+# supreme-ralph (formerly claude-init)
 
-A CLI tool for scaffolding projects with Claude Code best practices, featuring RALPH autonomous development and AI newsletter aggregation.
+A global Claude Code extension for autonomous development with the RALPH multi-agent pipeline.
+
+## v3.0 Features
+
+- **Multi-Agent Pipeline**: Planner → Coder → QA Reviewer → QA Fixer
+- **Git Worktree Isolation**: Safe development per spec/PRD
+- **QA Validation Loop**: Iterative validation with max attempts
+- **Memory System**: Persistent cross-session knowledge graph
+- **Subagent Spawning**: Parallel execution for complex tasks
+- **Dynamic Complexity Detection**: SIMPLE/STANDARD/COMPLEX pipeline adaptation
+- **3-Layer Security**: Command allowlists, filesystem boundaries, intervention controls
 
 ## Architecture Overview
 
@@ -32,6 +42,13 @@ claude-init/
 │       ├── project-analyzer.js # Deep project analysis
 │       ├── spec-generator.js  # PROJECT_SPEC.md generation
 │       ├── prd-validator.js   # PRD schema validation
+│       ├── worktree-manager.js # Git worktree isolation (v3.0)
+│       ├── qa-loop.js         # QA validation loop (v3.0)
+│       ├── memory-manager.js  # Persistent memory layer (v3.0)
+│       ├── complexity-classifier.js # Pipeline adaptation (v3.0)
+│       ├── security-analyzer.js # Command allowlists (v3.0)
+│       ├── boundary-validator.js # Filesystem boundaries (v3.0)
+│       ├── intervention-manager.js # Pause/resume/rollback (v3.0)
 │       ├── news-aggregator.js # Multi-source news fetcher
 │       ├── news-sources.js    # RSS/API source definitions
 │       ├── news-fetcher.js    # News formatting
@@ -42,7 +59,29 @@ claude-init/
 │       ├── diff-checker.js    # Track knowledge base changes
 │       └── design-system.js   # CLI UI with themes
 ├── templates/                 # Project scaffolding templates
-│   ├── ralph/                 # RALPH autonomous agent
+│   ├── global/                # Global ~/.claude/ templates (v3.0)
+│   │   ├── skills/            # Global skills
+│   │   │   ├── setup-project/ # Interactive project setup
+│   │   │   ├── ralph/         # RALPH status/management
+│   │   │   ├── ralph-run/     # RALPH execution with multi-agent pipeline
+│   │   │   ├── ralph-plan/    # Implementation planning
+│   │   │   ├── ralph-qa/      # QA validation
+│   │   │   ├── ralph-memory/  # Memory management
+│   │   │   ├── ralph-merge/   # Worktree merge
+│   │   │   ├── ralph-review/  # Worktree review
+│   │   │   ├── ralph-discard/ # Worktree discard
+│   │   │   ├── ralph-pause/   # Pause execution
+│   │   │   ├── ralph-resume/  # Resume execution
+│   │   │   ├── ralph-rollback/ # Rollback to checkpoint
+│   │   │   └── prd/           # PRD generation
+│   │   ├── agents/            # Multi-agent definitions
+│   │   │   ├── planner.md     # Strategic planning
+│   │   │   ├── coder.md       # Implementation
+│   │   │   ├── qa-reviewer.md # Validation
+│   │   │   └── qa-fixer.md    # Fix issues
+│   │   ├── commands/          # Utility commands
+│   │   └── rules/             # Code style rules
+│   ├── ralph/                 # Legacy RALPH templates
 │   │   ├── CLAUDE.md.template # RALPH prompt template
 │   │   ├── ralph.sh.template  # Bash loop script
 │   │   └── skills/            # PRD and conversion skills

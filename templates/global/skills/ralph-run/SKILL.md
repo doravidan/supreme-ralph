@@ -1,12 +1,13 @@
 ---
 name: ralph-run
-description: Run RALPH autonomous development loop - implements features from PRD
-allowed-tools: Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion
+description: Run RALPH autonomous development loop with multi-agent pipeline
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Task, AskUserQuestion, TodoWrite
 ---
 
-# RALPH-RUN - Autonomous Development Execution
+# RALPH-RUN - Multi-Agent Autonomous Development
 
-Execute the RALPH (Recursive Autonomous Loop for Production Harmony) development cycle to implement features from a PRD.
+Execute the RALPH development cycle using a multi-agent pipeline:
+**Planner → Coder → QA Reviewer → QA Fixer**
 
 ## Commands
 
@@ -14,7 +15,18 @@ Execute the RALPH (Recursive Autonomous Loop for Production Harmony) development
 |---------|-------------|
 | `/ralph-run` | Start with default 10 iterations |
 | `/ralph-run 20` | Start with 20 iterations |
-| `/ralph-run --task "description"` | Single-task mode (no PRD needed) |
+| `/ralph-run --parallel` | Run independent subtasks in parallel |
+| `/ralph-run --simple` | Skip planner, direct implementation |
+| `/ralph-run --task "desc"` | Single-task mode (no PRD needed) |
+| `/ralph-run --no-worktree` | Run in current branch (skip worktree isolation) |
+
+## Related Commands
+
+| Command | Description |
+|---------|-------------|
+| `/ralph-merge` | Merge completed worktree to main branch |
+| `/ralph-review` | Review worktree changes before merging |
+| `/ralph-discard` | Abandon worktree without merging |
 
 ## Triggers
 
@@ -25,411 +37,605 @@ Execute the RALPH (Recursive Autonomous Loop for Production Harmony) development
 
 ## Critical Rules
 
-1. **ONE TASK PER ITERATION** - Complete exactly one task, then report completion
-2. **ASK QUESTIONS WHEN UNCERTAIN** - Use AskUserQuestion for ANY ambiguity
-3. **QUALITY FIRST** - All quality gates must pass before marking complete
-4. **FOLLOW RULES** - Rules from .ralph/config.yaml are mandatory
-5. **RESPECT BOUNDARIES** - Never modify files in the boundaries list
-6. **LOG LEARNINGS** - Document patterns for future iterations
-7. **CLEAN COMMITS** - Write descriptive commit messages
+1. **USE AGENT PIPELINE** - Planner → Coder → QA Reviewer → QA Fixer
+2. **ONE SUBTASK AT A TIME** - Complete fully before moving on
+3. **QA MUST PASS** - No skipping QA validation
+4. **ASK WHEN UNCERTAIN** - Use AskUserQuestion for ambiguity
+5. **RESPECT BOUNDARIES** - Never modify files in boundaries list
+6. **LOG TO MEMORY** - Save learnings for future iterations
+7. **MAX 3 QA FIX ATTEMPTS** - Escalate to human after 3 failures
 
-## PRD Loop Mode
+## Multi-Agent Pipeline
 
-### Prerequisites Check
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    RALPH Pipeline v3.0                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐ │
+│   │ PLANNER  │───▶│  CODER   │───▶│ QA REV   │───▶│ QA FIX   │ │
+│   └──────────┘    └──────────┘    └──────────┘    └──────────┘ │
+│        │                │               │               │       │
+│        ▼                ▼               ▼               ▼       │
+│   impl_plan.json   subtask done    QA report      fixes done   │
+│                                         │               │       │
+│                                         └───────────────┘       │
+│                                         (loop until pass)       │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-Before starting, verify these files exist:
+## Phase 0: Prerequisites & Worktree Setup
+
+Before starting, verify environment and set up isolated worktree:
 
 ```bash
-# Check for PRD (supports multiple formats)
+# Check for PRD
 if [ -f prd.json ]; then
-  echo "✓ Found prd.json"
   REMAINING=$(cat prd.json | jq '[.userStories[] | select(.passes == false)] | length')
-  echo "  $REMAINING stories remaining"
-elif [ -f PRD.md ]; then
-  echo "✓ Found PRD.md"
-  REMAINING=$(grep -c '^\s*- \[ \]' PRD.md || echo "0")
-  echo "  $REMAINING tasks remaining"
-elif [ -f tasks.yaml ]; then
-  echo "✓ Found tasks.yaml"
+  PROJECT=$(cat prd.json | jq -r '.project')
+  BRANCH=$(cat prd.json | jq -r '.branchName // "ralph/feature"')
+  echo "✓ PRD: $PROJECT - $REMAINING stories remaining"
 else
-  echo "❌ No PRD found"
-  echo "Run /prd [feature] or /setup-project first"
+  echo "❌ No prd.json - run /prd first"
   exit 1
 fi
 
-# Check for PROJECT_SPEC.md (recommended)
-if [ -f PROJECT_SPEC.md ]; then
-  echo "✓ Found PROJECT_SPEC.md"
+# Check for implementation plan
+if [ -f implementation_plan.json ]; then
+  echo "✓ Implementation plan exists"
 else
-  echo "⚠ PROJECT_SPEC.md not found (recommended)"
-  echo "  Run /setup-project to generate it"
+  echo "⚠ No implementation_plan.json - will invoke Planner"
 fi
 
-# Check for .ralph/config.yaml
-if [ -f .ralph/config.yaml ]; then
-  echo "✓ Found .ralph/config.yaml"
-else
-  echo "⚠ .ralph/config.yaml not found"
-  echo "  Run /setup-project to generate it"
-fi
-
-# Check git status
-echo ""
-echo "=== Git Status ==="
-git status --short
+# Check for config
+[ -f .ralph/config.yaml ] && echo "✓ Config loaded"
+[ -f PROJECT_SPEC.md ] && echo "✓ Project spec loaded"
 ```
 
-### Execution Flow
+### Worktree Isolation (unless --no-worktree)
 
-For each iteration:
-
-#### Step 1: Read Context
-
-```bash
-# Read PRD
-cat prd.json
-
-# Read project specification
-cat PROJECT_SPEC.md 2>/dev/null || echo "No spec found"
-
-# Read progress from previous iterations
-cat .ralph/progress.txt 2>/dev/null || echo "No progress yet"
-
-# Read configuration (rules, boundaries, commands)
-cat .ralph/config.yaml 2>/dev/null || echo "No config"
-
-# Check git history for context
-git log --oneline -10
-```
-
-#### Step 2: Select Task
-
-Pick the HIGHEST PRIORITY task where completion status is false:
-
-```bash
-# Get next task (JSON format)
-cat prd.json | jq -r '
-  .userStories
-  | map(select(.passes == false))
-  | sort_by(.priority)
-  | .[0]
-  | "Task: \(.id) - \(.title)\nPriority: \(.priority)\nDescription: \(.description)\nAcceptance Criteria:\n\(.acceptanceCriteria | map("  - " + .) | join("\n"))"
-'
-```
-
-Display to user:
+RALPH runs in an isolated git worktree to protect the main branch:
 
 ```
 ╔════════════════════════════════════════════════════════════════╗
-║                    Starting RALPH Iteration                     ║
+║                    Worktree Setup                               ║
 ╚════════════════════════════════════════════════════════════════╝
 
-📋 Task: US-001 - Create User model and auth types
-   Priority: 1
+Checking for existing worktree...
 
-   Description:
-   Define TypeScript interfaces for User, Session, and auth tokens
+Creating worktree for: user-authentication
+  Branch: ralph/user-authentication
+  Path: .worktrees/user-authentication/
 
-   Acceptance Criteria:
-   - User interface with id, email, passwordHash, createdAt
-   - Session interface with userId, token, expiresAt
-   - Types exported from src/types/auth.ts
-   - Type checking passes
+✓ Worktree created
+✓ .gitignore updated (ignoring .worktrees/)
+
+All development will happen in: .worktrees/user-authentication/
+
+When complete, use:
+  /ralph-merge    - Merge changes to main
+  /ralph-review   - Review changes before merging
+  /ralph-discard  - Abandon changes
 ```
 
-#### Step 3: Clarify Requirements (CRITICAL)
-
-**BEFORE implementing, review the task requirements. If ANYTHING is unclear, use AskUserQuestion:**
-
-Use AskUserQuestion when you encounter:
-- Multiple valid implementation approaches
-- Unclear acceptance criteria
-- Missing technical specifications
-- Edge cases not covered in requirements
-- Design decisions that could affect future tasks
-- Technology choices not specified in the task
-
-**Example questions to ask:**
+**Worktree Structure:**
 
 ```
-? Should I use a specific library for password hashing?
-  ○ bcrypt (Recommended)
-  ○ argon2
-  ○ scrypt
-  ○ Let me specify
-
-? Where should the User model be stored?
-  ○ src/models/User.ts (Recommended)
-  ○ src/types/user.ts
-  ○ src/entities/User.ts
-  ○ Let me specify
+project/
+├── .worktrees/                    # Worktree directory (gitignored)
+│   └── {spec-name}/               # Isolated working copy
+│       ├── src/                   # Full project copy
+│       ├── .ralph/                # RALPH state
+│       └── prd.json               # PRD file
+├── src/                           # Main branch (untouched)
+└── prd.json                       # Original PRD
 ```
 
-**DO NOT GUESS** on important decisions - asking takes seconds, rework takes iterations.
+**Benefits:**
+- Main branch stays clean until merge
+- Safe experimentation without polluting history
+- Easy discard if implementation goes wrong
+- Review all changes before integrating
 
-#### Step 4: Implement
+## Phase 1: Planning (Planner Agent)
 
-Once requirements are clear, write clean, production-ready code following:
+**If no `implementation_plan.json` exists, invoke the Planner:**
 
-1. **Patterns from PROJECT_SPEC.md** - Match existing code style
-2. **Rules from .ralph/config.yaml** - Mandatory guidelines
-3. **Learnings from .ralph/progress.txt** - Avoid past mistakes
-4. **ALL acceptance criteria** - Must satisfy every criterion
+The Planner agent decomposes stories into subtasks:
 
-**Implementation guidelines:**
-- Write tests alongside implementation
-- Follow existing naming conventions
-- Use proper error handling
-- Add appropriate comments (why, not what)
-- Keep functions small and focused
+```
+╔════════════════════════════════════════════════════════════════╗
+║                    Phase 1: PLANNING                            ║
+║                    Agent: Planner                               ║
+╚════════════════════════════════════════════════════════════════╝
 
-#### Step 5: Quality Gates
+Analyzing PRD...
+Reading PROJECT_SPEC.md for patterns...
+Querying memory for past implementations...
 
-Run ALL configured quality commands - they must ALL pass:
+Decomposing US-001 into subtasks:
+  ST-001-1: Create User type definitions
+  ST-001-2: Create Zod validation schema
+  ST-001-3: Create User service layer
+  ST-001-4: Add unit tests
+
+Writing implementation_plan.json...
+```
+
+**Planner outputs `implementation_plan.json`:**
+
+```json
+{
+  "stories": [{
+    "storyId": "US-001",
+    "subtasks": [{
+      "id": "ST-001-1",
+      "title": "Create User type definitions",
+      "files_to_create": ["src/types/user.ts"],
+      "files_to_modify": ["src/types/index.ts"],
+      "dependencies": [],
+      "acceptance_criteria": ["User interface defined", "Exported from index"]
+    }]
+  }]
+}
+```
+
+## Phase 2: Implementation (Coder Agent)
+
+For each subtask, the Coder agent implements:
+
+```
+╔════════════════════════════════════════════════════════════════╗
+║                    Phase 2: IMPLEMENTATION                      ║
+║                    Agent: Coder                                 ║
+║                    Subtask: ST-001-1                            ║
+╚════════════════════════════════════════════════════════════════╝
+
+Reading subtask requirements...
+Checking project patterns...
+Loading memory insights...
+
+Implementing: Create User type definitions
+  → Creating src/types/user.ts
+  → Modifying src/types/index.ts
+
+Running quality gates...
+  ✓ Typecheck passed
+  ✓ Lint passed
+  ✓ Tests passed
+
+Subtask implementation complete.
+Passing to QA Reviewer...
+```
+
+**Coder can spawn subagents for parallel work:**
+
+```javascript
+// For independent subtasks, use Task tool
+Task({
+  subagent_type: "general-purpose",
+  description: "Implement ST-001-2",
+  prompt: "Implement the Zod validation schema...",
+  run_in_background: true
+})
+```
+
+## Phase 3: QA Review (QA Reviewer Agent)
+
+QA Reviewer validates each subtask against acceptance criteria:
+
+```
+╔════════════════════════════════════════════════════════════════╗
+║                    Phase 3: QA REVIEW                           ║
+║                    Agent: QA Reviewer                           ║
+║                    Subtask: ST-001-1                            ║
+╚════════════════════════════════════════════════════════════════╝
+
+Validating acceptance criteria...
+
+Criterion: User interface defined
+  ✓ PASS - Found User interface in src/types/user.ts:5-15
+
+Criterion: Exported from index
+  ✗ FAIL - Export statement missing from src/types/index.ts
+
+Quality Gates:
+  ✓ Typecheck
+  ✓ Lint
+  ✓ Tests
+
+Issues Found: 1
+  [HIGH] Missing export in src/types/index.ts
+
+Status: NEEDS_FIX
+Passing to QA Fixer...
+```
+
+**QA Report Schema:**
+
+```json
+{
+  "subtaskId": "ST-001-1",
+  "status": "needs_fix",
+  "criteria": [
+    {"criterion": "User interface defined", "passed": true},
+    {"criterion": "Exported from index", "passed": false, "issue": "Missing export"}
+  ],
+  "issues": [{
+    "severity": "high",
+    "file": "src/types/index.ts",
+    "suggestion": "Add: export * from './user';"
+  }]
+}
+```
+
+## Phase 4: QA Fix (QA Fixer Agent)
+
+If QA fails, QA Fixer attempts to resolve issues:
+
+```
+╔════════════════════════════════════════════════════════════════╗
+║                    Phase 4: QA FIX                              ║
+║                    Agent: QA Fixer                              ║
+║                    Attempt: 1/3                                 ║
+╚════════════════════════════════════════════════════════════════╝
+
+Issues to fix: 1
+  [HIGH] Missing export in src/types/index.ts
+
+Applying fix...
+  → Editing src/types/index.ts
+  → Adding: export * from './user';
+
+Re-running quality gates...
+  ✓ Typecheck passed
+  ✓ Lint passed
+  ✓ Tests passed
+
+Status: ALL_FIXED
+Returning to QA Reviewer for verification...
+```
+
+**QA Fix Loop:**
+
+```
+QA Reviewer ─────▶ PASS ─────▶ Next Subtask
+     │
+     ▼
+  FAIL (issues)
+     │
+     ▼
+QA Fixer ─────▶ Fixed ─────▶ QA Reviewer (re-verify)
+     │
+     ▼
+  Attempt 3 failed
+     │
+     ▼
+ESCALATE TO HUMAN
+```
+
+## Phase 5: Commit & Update
+
+After subtask passes QA:
 
 ```bash
-# Read commands from config
-TEST_CMD=$(cat .ralph/config.yaml | grep 'test:' | cut -d'"' -f2)
-LINT_CMD=$(cat .ralph/config.yaml | grep 'lint:' | cut -d'"' -f2)
-TYPECHECK_CMD=$(cat .ralph/config.yaml | grep 'typecheck:' | cut -d'"' -f2)
-
-# Run each command
-echo "Running quality gates..."
-
-if [ -n "$TYPECHECK_CMD" ]; then
-  echo "▶ Typecheck: $TYPECHECK_CMD"
-  $TYPECHECK_CMD
-fi
-
-if [ -n "$LINT_CMD" ]; then
-  echo "▶ Lint: $LINT_CMD"
-  $LINT_CMD
-fi
-
-if [ -n "$TEST_CMD" ]; then
-  echo "▶ Test: $TEST_CMD"
-  $TEST_CMD
-fi
-```
-
-**If any check fails:**
-1. Fix the issues
-2. Re-run the failing check
-3. Continue only when ALL pass
-
-#### Step 6: Commit
-
-```bash
+# Commit the changes
 git add -A
-git commit -m "feat: [TASK-ID] - [Task Title]
+git commit -m "feat: ST-001-1 - Create User type definitions
 
-- Brief description of changes
-- Files affected
+- Created User interface with id, email, createdAt
+- Exported from src/types/index.ts
+- All quality gates pass
 
-Acceptance criteria met:
-- [List satisfied criteria]
-
+Reviewed-By: QA-Agent
 Co-Authored-By: RALPH <noreply@anthropic.com>"
+
+# Update implementation plan
+# Mark subtask as complete
 ```
 
-Example:
-```bash
-git commit -m "feat: US-001 - Create User model and auth types
+## Phase 6: Memory & Learning
 
-- Created User and Session interfaces
-- Added token type definitions
-- Exported all types from src/types/auth.ts
+Log insights to `.ralph/memory/insights.json`:
 
-Acceptance criteria met:
-- User interface with id, email, passwordHash, createdAt ✓
-- Session interface with userId, token, expiresAt ✓
-- Types exported from src/types/auth.ts ✓
-- Type checking passes ✓
-
-Co-Authored-By: RALPH <noreply@anthropic.com>"
+```json
+{
+  "context": "Implementing type definitions",
+  "learning": "Always export new types from index.ts immediately",
+  "tags": ["types", "exports", "patterns"],
+  "timestamp": "2026-01-25T10:30:00Z"
+}
 ```
 
-#### Step 7: Update PRD
+## Phase 7: Context Compaction
 
-Mark the completed task:
+If `compact_after_each_story: true` in config:
 
-**JSON format (prd.json):**
-```bash
-# Update the specific story to passes: true
-cat prd.json | jq '(.userStories[] | select(.id == "US-001")).passes = true' > prd.json.tmp
-mv prd.json.tmp prd.json
+```
+📦 Compacting context...
+
+Preserving:
+  - PRD state (5 stories remaining)
+  - Memory insights (12 total)
+  - Progress log (1 story complete)
+
+Releasing:
+  - File exploration details
+  - Implementation specifics
+  - QA fix history
+
+Context compacted at 60% threshold.
 ```
 
-**Markdown format (PRD.md):**
-Change `- [ ]` to `- [x]` for the completed task
-
-**YAML format (tasks.yaml):**
-Set `completed: true` for the task
-
-#### Step 8: Log Progress
-
-Append to `.ralph/progress.txt`:
-
-```markdown
-## [Date] - [TASK-ID]: [Task Title]
-
-**What was implemented:**
-- [Description of implementation]
-
-**Files changed:**
-- [list of files]
-
-**Learnings for future iterations:**
-- [Patterns discovered]
-- [Gotchas to avoid]
-- [Conventions learned]
-
----
-```
-
-#### Step 9: Compact Context
-
-**After each story completion, compact the context to maintain fresh context for the next iteration:**
-
-```bash
-# Read compact settings from config
-COMPACT_ENABLED=$(cat .ralph/config.yaml | grep 'compact_after_each_story:' | awk '{print $2}')
-COMPACT_THRESHOLD=$(cat .ralph/config.yaml | grep 'compact_threshold:' | awk '{print $2}')
-
-if [ "$COMPACT_ENABLED" = "true" ]; then
-  echo "📦 Compacting context for next iteration..."
-fi
-```
-
-When `compact_after_each_story: true` is set in config:
-1. **Summarize the iteration** - What was done, key files changed
-2. **Preserve learnings** - Keep patterns from .ralph/progress.txt
-3. **Clear implementation details** - Release memory of code exploration
-4. **Retain PRD state** - Keep track of remaining stories
-
-This ensures each iteration starts with fresh context while preserving critical information.
-
-#### Step 10: Check Completion
-
-```bash
-# Check if all stories are complete
-REMAINING=$(cat prd.json | jq '[.userStories[] | select(.passes == false)] | length')
-
-if [ "$REMAINING" -eq 0 ]; then
-  echo "<promise>COMPLETE</promise>"
-else
-  echo "Iteration complete. $REMAINING stories remaining."
-fi
-```
-
-**If ALL tasks complete:** Output `<promise>COMPLETE</promise>`
-
-**Otherwise:** Report completion and wait for next iteration
-
-## Single-Task Mode
-
-For `/ralph-run --task "description"`:
+## Full Iteration Output
 
 ```
 ╔════════════════════════════════════════════════════════════════╗
-║                   Single-Task Mode                              ║
+║               RALPH Iteration 1 Complete                        ║
 ╚════════════════════════════════════════════════════════════════╝
 
-Task: [user-provided description]
+Worktree: .worktrees/user-authentication
+Branch: ralph/user-authentication
 
-This mode executes a single task without a PRD.
-```
+Story: US-001 - Create User model
+Subtasks: 4/4 complete
 
-1. **No PRD required** - Task comes from command argument
-2. **Use AskUserQuestion** for any clarifications
-3. **Follow quality gates** - Still run all checks
-4. **Commit when complete** - Standard commit format
+Pipeline Summary:
+  ┌──────────────────────────────────────────────────────────────┐
+  │ Planner   │ ✓ Created 4 subtasks                            │
+  │ Coder     │ ✓ Implemented all subtasks                      │
+  │ QA Review │ ✓ 3 passed first time, 1 needed fix             │
+  │ QA Fixer  │ ✓ Fixed 1 issue (missing export)                │
+  └──────────────────────────────────────────────────────────────┘
 
-Example:
-```
-/ralph-run --task "Add dark mode toggle to settings page"
-```
+Quality Gates:
+  ✓ Typecheck passed
+  ✓ Lint passed
+  ✓ Tests passed (4 new tests)
 
-Process:
-1. Analyze task description
-2. Ask clarifying questions if needed
-3. Implement the feature
-4. Run quality gates
-5. Commit with descriptive message
+Commits (in worktree):
+  abc1234 feat: ST-001-1 - Create User type definitions
+  def5678 feat: ST-001-2 - Create Zod validation schema
+  ghi9012 feat: ST-001-3 - Create User service layer
+  jkl3456 feat: ST-001-4 - Add unit tests
 
-## Output Formats
-
-### Iteration Start
-
-```
-╔════════════════════════════════════════════════════════════════╗
-║                Starting RALPH Iteration 1/10                    ║
-╚════════════════════════════════════════════════════════════════╝
-
-PRD: User Authentication
-Stories: 6 total, 0 complete
-
-📋 Current Task: US-001 - Create User model and auth types
-   Priority: 1
-```
-
-### Iteration Complete
-
-```
-╔════════════════════════════════════════════════════════════════╗
-║                 Iteration 1/10 Complete                         ║
-╚════════════════════════════════════════════════════════════════╝
-
-✓ Implemented: US-001 - Create User model and auth types
-✓ Quality gates passed
-✓ Committed: abc1234
-✓ PRD updated
-✓ Context compacted (threshold: 60%)
+Memory:
+  + 3 new insights saved
 
 Progress: 1/6 stories (17% complete)
 Remaining: 5 stories
+
+Worktree Status:
+  ✓ 4 commits ahead of main
+  ✓ 12 files changed
+
+Next: US-002 - Implement password hashing
+
+When complete, run /ralph-merge to integrate changes.
 ```
 
-### All Complete
+## Escalation Protocol
+
+When QA Fixer fails 3 times:
 
 ```
 ╔════════════════════════════════════════════════════════════════╗
-║                     RALPH Complete!                             ║
+║                 ESCALATION REQUIRED                             ║
 ╚════════════════════════════════════════════════════════════════╝
 
-<promise>COMPLETE</promise>
+Subtask: ST-001-3 - Create User service
+Attempts: 3 (max reached)
 
-Project: User Authentication
-Stories: 6/6 complete (100%)
+Unresolved Issue:
+  [HIGH] Type mismatch in UserService.create()
 
-Commits:
-  abc1234 feat: US-001 - Create User model and auth types
-  def5678 feat: US-002 - Implement password hashing service
-  ghi9012 feat: US-003 - Create JWT token utilities
-  jkl3456 feat: US-004 - Add login and register routes
-  mno7890 feat: US-005 - Implement auth middleware
-  pqr1234 feat: US-006 - Add logout and session management
+  Tried:
+    1. Cast to correct type - still fails
+    2. Add type assertion - introduces any
+    3. Refactor function signature - breaks tests
 
-Next Steps:
-  1. Review the implementation: git diff main..HEAD
-  2. Run full test suite: npm test
-  3. Create PR: gh pr create --base main
+Recommendation:
+  This may require architectural changes.
+
+Options:
+  1. Provide guidance to continue
+  2. Skip this subtask for now
+  3. Abort RALPH run
+```
+
+Use AskUserQuestion for human decision.
+
+## Parallel Mode
+
+With `/ralph-run --parallel`:
+
+```
+╔════════════════════════════════════════════════════════════════╗
+║               RALPH Parallel Mode                               ║
+╚════════════════════════════════════════════════════════════════╝
+
+Analyzing subtask dependencies...
+
+Parallel Batch 1 (no dependencies):
+  → Spawning agent: ST-001-1
+  → Spawning agent: ST-001-2
+
+Waiting for completion...
+
+[████████░░] ST-001-1: Implementing types...
+[██████████] ST-001-2: ✓ Complete
+
+Parallel Batch 2 (depends on batch 1):
+  → Spawning agent: ST-001-3
+  → Spawning agent: ST-001-4
+```
+
+## Simple Mode
+
+With `/ralph-run --simple`:
+
+Skip the Planner agent, implement stories directly:
+
+```
+╔════════════════════════════════════════════════════════════════╗
+║               RALPH Simple Mode                                 ║
+╚════════════════════════════════════════════════════════════════╝
+
+Skipping Planner (simple mode)
+Implementing US-001 directly...
+
+Pipeline: Coder → QA Reviewer → QA Fixer
+```
+
+## Complexity-Based Pipeline Adaptation
+
+RALPH automatically adapts the pipeline based on PRD complexity:
+
+### Auto-Detection
+
+```
+╔════════════════════════════════════════════════════════════════╗
+║               Complexity Classification                         ║
+╚════════════════════════════════════════════════════════════════╝
+
+Analyzing PRD complexity...
+
+Level: STANDARD
+Score: 28
+
+Metrics:
+  Stories: 6
+  Files affected: 12
+  Dependencies: 3
+  Acceptance criteria: 24
+
+Pipeline configured for STANDARD complexity.
+```
+
+### SIMPLE Pipeline (1-2 stories, minimal dependencies)
+
+```
+╔════════════════════════════════════════════════════════════════╗
+║               SIMPLE Pipeline                                   ║
+╚════════════════════════════════════════════════════════════════╝
+
+Complexity: SIMPLE (score < 15)
+
+Pipeline: CODER → LIGHT QA
+
+  - No Planner agent (direct implementation)
+  - Light QA validation (essential checks only)
+  - No parallel execution
+  - No research phase
+  - Single iteration per story
+```
+
+### STANDARD Pipeline (3-6 stories, moderate complexity)
+
+```
+╔════════════════════════════════════════════════════════════════╗
+║               STANDARD Pipeline                                 ║
+╚════════════════════════════════════════════════════════════════╝
+
+Complexity: STANDARD (score 15-40)
+
+Pipeline: PLANNER → CODER → QA REVIEWER → QA FIXER
+
+  - Full planning phase
+  - Standard QA validation
+  - Parallel execution enabled
+  - Max 3 QA fix attempts
+  - Memory logging
+```
+
+### COMPLEX Pipeline (7+ stories, architectural changes)
+
+```
+╔════════════════════════════════════════════════════════════════╗
+║               COMPLEX Pipeline                                  ║
+╚════════════════════════════════════════════════════════════════╝
+
+Complexity: COMPLEX (score > 40)
+
+Pipeline: RESEARCH → PLANNER → SELF-CRITIQUE → CODER → EXTENSIVE QA
+
+  - Research phase before planning
+  - Extended planning with risk analysis
+  - Self-critique validates plan quality
+  - Extensive QA with more iterations
+  - Max 5 QA fix attempts
+  - Mandatory human checkpoints
+```
+
+### Override Complexity
+
+Force a specific complexity level:
+
+```bash
+/ralph-run --complexity=COMPLEX
+/ralph-run --complexity=SIMPLE
+```
+
+### Complexity Settings in Config
+
+```yaml
+# .ralph/config.yaml
+complexity:
+  auto_detect: true
+  default_level: STANDARD
+
+  simple:
+    max_qa_attempts: 2
+    use_planner: false
+    parallel_enabled: false
+
+  standard:
+    max_qa_attempts: 3
+    use_planner: true
+    parallel_enabled: true
+
+  complex:
+    max_qa_attempts: 5
+    use_planner: true
+    parallel_enabled: true
+    research_phase: true
+    self_critique: true
+    human_checkpoints: true
 ```
 
 ## Error Recovery
 
 | Error | Action |
 |-------|--------|
-| Quality gate fails | Fix issues, re-run check |
+| No PRD found | Direct to `/prd [feature]` |
+| No implementation plan | Invoke Planner agent |
+| QA fails 3 times | Escalate to human |
+| Quality gate fails | QA Fixer attempts fix |
+| Agent timeout | Retry or skip subtask |
 | Unclear requirements | Use AskUserQuestion |
-| Cannot complete task | Ask user for help or skip |
-| Git conflict | Resolve and retry commit |
-| Test fails | Fix test or implementation |
+
+## Configuration
+
+In `.ralph/config.yaml`:
+
+```yaml
+pipeline:
+  use_planner: true
+  max_qa_attempts: 3
+  parallel_enabled: false
+  max_parallel_agents: 4
+
+settings:
+  compact_after_each_story: true
+  compact_threshold: 60
+  commit_after_each_subtask: true
+```
 
 ## Tips
 
-- **Ask questions early** - It's faster than rework
-- **Commit often** - Each task = one commit
-- **Log learnings** - Help future iterations
-- **Follow patterns** - Consistency matters
-- **Quality first** - Never skip gates
+- **Trust the pipeline** - Let each agent do its job
+- **QA is mandatory** - Never skip validation
+- **Escalate early** - 3 failed attempts = human help needed
+- **Log everything** - Memory helps future iterations
+- **Parallel when safe** - Only for truly independent work

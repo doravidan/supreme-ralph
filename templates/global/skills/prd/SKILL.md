@@ -15,6 +15,8 @@ Generate intelligent, context-aware PRDs for RALPH autonomous development.
 | `/prd [feature]` | Generate PRD for a feature |
 | `/prd --interactive` | Interactive PRD creation with questions |
 | `/prd --from-spec` | Generate PRD from existing PROJECT_SPEC.md |
+| `/prd --simple` | Quick spec for simple features (1-2 stories) |
+| `/prd --complex` | Deep analysis for complex features (7+ stories) |
 
 ## Triggers
 
@@ -355,6 +357,135 @@ Next Steps:
 }
 ```
 
+## Complexity-Based Spec Creation Pipeline
+
+The PRD process adapts based on detected or specified complexity:
+
+### SIMPLE Mode (`/prd --simple`)
+
+For quick, small features:
+
+```
+Pipeline: Discovery → Quick Spec → Validate
+
+1. Discovery (1-2 questions)
+   - What does this feature do?
+   - Any specific constraints?
+
+2. Quick Spec
+   - 1-2 user stories
+   - Essential criteria only
+   - Skip deep analysis
+
+3. Validate
+   - Check schema validity
+   - Verify against PROJECT_SPEC.md
+```
+
+### STANDARD Mode (Default)
+
+For typical features:
+
+```
+Pipeline: Discovery → Requirements → Context → Spec → Plan → Validate
+
+1. Discovery (3-5 questions)
+   - Feature scope
+   - User impact
+   - Technical considerations
+
+2. Requirements
+   - Break into user stories
+   - Define acceptance criteria
+   - Identify dependencies
+
+3. Context
+   - Read PROJECT_SPEC.md
+   - Check existing patterns
+   - Query memory for similar features
+
+4. Spec Generation
+   - Create prd.json
+   - Generate human-readable version
+
+5. Plan Preview
+   - Estimate complexity
+   - Suggest pipeline configuration
+
+6. Validate
+   - Schema validation
+   - Pattern compliance
+   - Quality gate coverage
+```
+
+### COMPLEX Mode (`/prd --complex`)
+
+For large, architectural features:
+
+```
+Pipeline: Research → Discovery → Requirements → Context → Spec → Self-Critique → Plan → Validate
+
+1. Research Phase (NEW)
+   - Analyze codebase architecture
+   - Identify integration points
+   - Check for breaking changes
+   - Review similar implementations in memory
+
+2. Extended Discovery (6-8 questions)
+   - Detailed scope definition
+   - Risk identification
+   - Performance considerations
+   - Security implications
+
+3. Deep Requirements
+   - 7+ user stories
+   - Detailed acceptance criteria
+   - Edge case coverage
+   - Error handling requirements
+
+4. Context Analysis
+   - Full codebase scan
+   - Dependency graph analysis
+   - Memory query for patterns
+
+5. Comprehensive Spec
+   - Detailed prd.json
+   - Architecture diagrams
+   - Risk assessment
+
+6. Self-Critique (NEW)
+   - Review generated spec
+   - Check for gaps
+   - Validate feasibility
+   - Suggest improvements
+
+7. Plan Generation
+   - Detailed subtask breakdown
+   - Parallel execution opportunities
+   - Human checkpoint recommendations
+
+8. Validate
+   - Schema validation
+   - Architecture compliance
+   - Security review
+   - Test coverage analysis
+```
+
+### Auto-Detection
+
+Without flags, complexity is auto-detected:
+
+```
+Analyzing feature: "Add user authentication"
+
+Detected complexity: STANDARD
+  - Mentions multiple components (types, routes, middleware)
+  - Requires security considerations
+  - Involves database/storage
+
+Using STANDARD pipeline...
+```
+
 ## Tips
 
 - **Be specific** in acceptance criteria - vague criteria lead to vague implementations
@@ -362,3 +493,4 @@ Next Steps:
 - **Order by dependency** - Lower priority stories can depend on higher priority ones
 - **Keep stories small** - If a story is too big, split it
 - **Match tech stack** - Use patterns appropriate for the project's framework
+- **Use appropriate mode** - Simple for quick fixes, complex for major features

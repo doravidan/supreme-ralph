@@ -321,10 +321,29 @@ function printSummary(stats) {
   console.log(chalk.green.bold('\n  🎉 RALPH is ready!\n'));
 
   console.log(chalk.white('  Available commands in any project:\n'));
+
+  console.log(chalk.white('  Core Commands:'));
   console.log(chalk.cyan('    /setup-project') + chalk.gray('  - Interactive project setup'));
+  console.log(chalk.cyan('    /prd') + chalk.gray('            - Generate PRD from description'));
+
+  console.log(chalk.white('\n  RALPH Autonomous Development:'));
   console.log(chalk.cyan('    /ralph') + chalk.gray('          - RALPH status and management'));
   console.log(chalk.cyan('    /ralph-run') + chalk.gray('      - Start autonomous development'));
-  console.log(chalk.cyan('    /prd') + chalk.gray('            - Generate PRD from description'));
+  console.log(chalk.cyan('    /ralph-plan') + chalk.gray('     - Create implementation plan'));
+  console.log(chalk.cyan('    /ralph-qa') + chalk.gray('       - Run QA validation'));
+  console.log(chalk.cyan('    /ralph-memory') + chalk.gray('   - Query/manage memory layer'));
+
+  console.log(chalk.white('\n  Worktree Management:'));
+  console.log(chalk.cyan('    /ralph-merge') + chalk.gray('    - Merge worktree to main'));
+  console.log(chalk.cyan('    /ralph-review') + chalk.gray('   - Review worktree changes'));
+  console.log(chalk.cyan('    /ralph-discard') + chalk.gray('  - Abandon worktree'));
+
+  console.log(chalk.white('\n  Intervention Controls:'));
+  console.log(chalk.cyan('    /ralph-pause') + chalk.gray('    - Pause after current subtask'));
+  console.log(chalk.cyan('    /ralph-resume') + chalk.gray('   - Resume from checkpoint'));
+  console.log(chalk.cyan('    /ralph-rollback') + chalk.gray(' - Rollback to checkpoint'));
+
+  console.log(chalk.white('\n  Utilities:'));
   console.log(chalk.cyan('    /code-review') + chalk.gray('    - Run code review'));
   console.log(chalk.cyan('    /commit') + chalk.gray('         - Create git commit'));
   console.log(chalk.cyan('    /review') + chalk.gray('         - Review changes'));

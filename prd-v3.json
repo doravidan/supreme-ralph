@@ -1,0 +1,373 @@
+{
+  "project": "Supreme RALPH v3.0 - Full Auto-Claude Feature Parity",
+  "version": "3.0.0",
+  "branchName": "ralph/v3-auto-claude-parity",
+  "description": "Implement all Auto-Claude features into supreme-ralph: multi-agent orchestration, git worktree isolation, QA validation loops, Graphiti-style memory, subagent spawning, dynamic complexity detection, and 3-layer security model.",
+  "epics": [
+    {
+      "id": "EPIC-01",
+      "title": "Multi-Agent Orchestration System",
+      "description": "Implement Planner → Coder → QA Reviewer → QA Fixer agent pipeline"
+    },
+    {
+      "id": "EPIC-02",
+      "title": "Git Worktree Isolation",
+      "description": "Each spec/PRD runs in isolated git worktree for safe experimentation"
+    },
+    {
+      "id": "EPIC-03",
+      "title": "QA Validation Loop",
+      "description": "Dedicated QA agents that validate and fix issues iteratively"
+    },
+    {
+      "id": "EPIC-04",
+      "title": "Memory System",
+      "description": "Persistent cross-session knowledge graph with semantic search"
+    },
+    {
+      "id": "EPIC-05",
+      "title": "Subagent Spawning",
+      "description": "Parallel execution via Task tool for complex tasks"
+    },
+    {
+      "id": "EPIC-06",
+      "title": "Dynamic Complexity Detection",
+      "description": "SIMPLE/STANDARD/COMPLEX pipeline adaptation"
+    },
+    {
+      "id": "EPIC-07",
+      "title": "Enhanced Security Model",
+      "description": "3-layer security with dynamic command allowlisting"
+    }
+  ],
+  "userStories": [
+    {
+      "id": "US-001",
+      "epic": "EPIC-01",
+      "title": "Create Agent Registry and Base Agent Class",
+      "description": "Define the agent types (planner, coder, qa_reviewer, qa_fixer) with their tool permissions and responsibilities",
+      "acceptanceCriteria": [
+        "Create .claude/agents/planner.md with planning-focused tools",
+        "Create .claude/agents/coder.md with implementation tools",
+        "Create .claude/agents/qa-reviewer.md with validation tools",
+        "Create .claude/agents/qa-fixer.md with fix-focused tools",
+        "Each agent has specific allowed-tools in frontmatter",
+        "Agent descriptions clearly define responsibilities"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Created planner.md, coder.md, qa-reviewer.md, qa-fixer.md in templates/global/agents/"
+    },
+    {
+      "id": "US-002",
+      "epic": "EPIC-01",
+      "title": "Create /ralph-plan Skill for Planner Agent",
+      "description": "Skill that decomposes a feature into subtasks with implementation plan",
+      "acceptanceCriteria": [
+        "Create templates/global/skills/ralph-plan/SKILL.md",
+        "Planner reads PRD and creates subtask breakdown",
+        "Outputs implementation_plan.json with ordered subtasks",
+        "Each subtask has: id, title, description, files_to_modify, dependencies",
+        "Plan validates against project patterns from PROJECT_SPEC.md",
+        "Uses AskUserQuestion for ambiguous requirements"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Created ralph-plan skill with full subtask decomposition workflow"
+    },
+    {
+      "id": "US-003",
+      "epic": "EPIC-01",
+      "title": "Update /ralph-run to Use Agent Pipeline",
+      "description": "Modify ralph-run to orchestrate: Plan → Code → Review → Fix cycle",
+      "acceptanceCriteria": [
+        "ralph-run first invokes planner agent if no implementation_plan.json",
+        "Coder agent executes one subtask at a time",
+        "After each subtask, QA reviewer validates against acceptance criteria",
+        "If QA fails, QA fixer attempts to resolve (max 3 attempts)",
+        "Pipeline progresses only when QA passes",
+        "Clear status output showing current agent and phase"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Updated ralph-run skill with full multi-agent pipeline documentation"
+    },
+    {
+      "id": "US-004",
+      "epic": "EPIC-02",
+      "title": "Implement Git Worktree Management",
+      "description": "Create worktree utilities for isolated development per spec",
+      "acceptanceCriteria": [
+        "Create scripts/utils/worktree-manager.js",
+        "Function to create worktree: createWorktree(specName) -> .worktrees/{spec}/",
+        "Function to list worktrees: listWorktrees()",
+        "Function to merge worktree: mergeWorktree(specName, targetBranch)",
+        "Function to discard worktree: discardWorktree(specName)",
+        "Branch naming: ralph/{spec-name}",
+        "Worktree stored in .worktrees/ directory"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Created worktree-manager.js with all CRUD operations for worktrees"
+    },
+    {
+      "id": "US-005",
+      "epic": "EPIC-02",
+      "title": "Integrate Worktree into /ralph-run",
+      "description": "RALPH runs in isolated worktree, user controls merge",
+      "acceptanceCriteria": [
+        "ralph-run creates worktree on first run if not exists",
+        "All implementation happens in worktree directory",
+        "Add /ralph-merge command to merge completed work",
+        "Add /ralph-review command to review worktree changes",
+        "Add /ralph-discard command to abandon worktree",
+        "Status shows current worktree and diff from main"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "Updated ralph-run skill with worktree setup phase, created ralph-merge, ralph-review, ralph-discard skills"
+    },
+    {
+      "id": "US-006",
+      "epic": "EPIC-03",
+      "title": "Create QA Validation Loop Module",
+      "description": "Implement iterative validation with max attempts and escalation",
+      "acceptanceCriteria": [
+        "Create scripts/utils/qa-loop.js",
+        "MAX_QA_ITERATIONS constant (default: 5)",
+        "RECURRING_ISSUE_THRESHOLD for detecting repeated failures",
+        "runQaValidation(subtask, implementation) -> {passed, issues}",
+        "runQaFix(issues) -> {fixed, remaining}",
+        "escalateToHuman(issues) when max iterations reached",
+        "Track iteration history in .ralph/qa-history.json"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "Created qa-loop.js with all required functions including createQaSession for managing QA iterations"
+    },
+    {
+      "id": "US-007",
+      "epic": "EPIC-03",
+      "title": "Create /ralph-qa Skill for Manual QA Trigger",
+      "description": "Allow users to manually run QA validation on current state",
+      "acceptanceCriteria": [
+        "Create templates/global/skills/ralph-qa/SKILL.md",
+        "/ralph-qa runs full validation against prd.json criteria",
+        "/ralph-qa --fix attempts to fix found issues",
+        "/ralph-qa --report generates detailed QA report",
+        "Shows pass/fail status for each acceptance criterion",
+        "Integrates with qa-loop.js module"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": "Created ralph-qa skill with full validation, fix, report, and history modes"
+    },
+    {
+      "id": "US-008",
+      "epic": "EPIC-04",
+      "title": "Create Memory Storage System",
+      "description": "Implement persistent memory with JSON-based graph storage",
+      "acceptanceCriteria": [
+        "Create scripts/utils/memory-manager.js",
+        "Memory stored in .ralph/memory/",
+        "Structure: entities.json, relationships.json, insights.json",
+        "addEntity(type, name, properties) function",
+        "addRelationship(from, to, type) function",
+        "addInsight(context, learning, tags) function",
+        "queryMemory(query, filters) with simple text matching"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": "Created memory-manager.js with full CRUD for entities, relationships, insights, plus query, stats, cleanup, and import/export"
+    },
+    {
+      "id": "US-009",
+      "epic": "EPIC-04",
+      "title": "Integrate Memory into Agent Sessions",
+      "description": "Agents read and write to memory during execution",
+      "acceptanceCriteria": [
+        "Planner queries memory for relevant past implementations",
+        "Coder logs patterns and gotchas to insights",
+        "QA logs recurring issues and fixes",
+        "Memory context included in agent prompts",
+        "Insights auto-extracted after each completed story",
+        "/ralph-memory command to query/manage memory"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": "Created /ralph-memory skill and updated planner.md, coder.md agents with memory integration sections"
+    },
+    {
+      "id": "US-010",
+      "epic": "EPIC-05",
+      "title": "Enable Subagent Spawning in Coder Agent",
+      "description": "Coder can spawn parallel subagents via Task tool for complex work",
+      "acceptanceCriteria": [
+        "Coder agent prompt includes guidance on when to use Task tool",
+        "Subagent types: researcher, implementer, tester",
+        "Clear criteria for spawning: independent files, parallel tests",
+        "Subagent results aggregated before proceeding",
+        "Max concurrent subagents configurable in .ralph/config.yaml",
+        "Subagent progress tracked in status output"
+      ],
+      "priority": 10,
+      "passes": true,
+      "notes": "Enhanced coder.md with detailed subagent spawning guidance, criteria, examples, and config"
+    },
+    {
+      "id": "US-011",
+      "epic": "EPIC-06",
+      "title": "Implement Complexity Classifier",
+      "description": "Analyze PRD/spec to determine SIMPLE/STANDARD/COMPLEX pipeline",
+      "acceptanceCriteria": [
+        "Create scripts/utils/complexity-classifier.js",
+        "SIMPLE: 1-2 stories, single file, no dependencies",
+        "STANDARD: 3-6 stories, multiple files, some dependencies",
+        "COMPLEX: 7+ stories, architectural changes, many dependencies",
+        "Classification stored in prd.json as 'complexity' field",
+        "Classification affects pipeline depth and agent involvement"
+      ],
+      "priority": 11,
+      "passes": true,
+      "notes": "Created complexity-classifier.js with scoring system, indicators detection, and pipeline recommendations"
+    },
+    {
+      "id": "US-012",
+      "epic": "EPIC-06",
+      "title": "Adapt Pipeline Based on Complexity",
+      "description": "Different complexity levels use different agent configurations",
+      "acceptanceCriteria": [
+        "SIMPLE: Skip planner, coder implements directly, light QA",
+        "STANDARD: Full planner → coder → QA pipeline",
+        "COMPLEX: Add research phase, self-critique, extensive QA",
+        "Pipeline configuration in .ralph/config.yaml",
+        "Override with /ralph-run --complexity=COMPLEX",
+        "Status shows current complexity and pipeline phases"
+      ],
+      "priority": 12,
+      "passes": true,
+      "notes": "Updated ralph-run skill with detailed pipeline adaptation for SIMPLE/STANDARD/COMPLEX levels"
+    },
+    {
+      "id": "US-013",
+      "epic": "EPIC-07",
+      "title": "Create Dynamic Command Allowlist",
+      "description": "Analyze project to generate allowed commands based on stack",
+      "acceptanceCriteria": [
+        "Create scripts/utils/security-analyzer.js",
+        "Detect project stack from package.json, requirements.txt, etc.",
+        "Generate .ralph/security.json with allowed commands",
+        "Node projects: npm, node, npx, vitest, jest, etc.",
+        "Python projects: python, pip, pytest, etc.",
+        "Commands validated before execution",
+        "User can extend allowlist in security.json"
+      ],
+      "priority": 13,
+      "passes": true,
+      "notes": "Created security-analyzer.js with stack detection, command allowlists, and validation"
+    },
+    {
+      "id": "US-014",
+      "epic": "EPIC-07",
+      "title": "Implement Filesystem Boundaries",
+      "description": "Restrict file operations to project directory with explicit boundaries",
+      "acceptanceCriteria": [
+        "Boundaries defined in .ralph/config.yaml under 'boundaries'",
+        "never_touch: files that should never be modified",
+        "read_only: files that can be read but not written",
+        "Validation before any Write/Edit operation",
+        "Warning when approaching boundary files",
+        "Override with explicit user confirmation"
+      ],
+      "priority": 14,
+      "passes": true,
+      "notes": "Created boundary-validator.js with full validation, pattern matching, and config support"
+    },
+    {
+      "id": "US-015",
+      "epic": "EPIC-07",
+      "title": "Add Recovery and Intervention System",
+      "description": "Enable pause, resume, and rollback during RALPH execution",
+      "acceptanceCriteria": [
+        "Create .ralph/intervention.json for pause signals",
+        "RALPH checks for intervention file each iteration",
+        "States: running, paused, cancelled",
+        "/ralph-pause to pause after current subtask",
+        "/ralph-resume to continue from last checkpoint",
+        "/ralph-rollback to revert to last good state",
+        "Checkpoint saved after each successful subtask"
+      ],
+      "priority": 15,
+      "passes": true,
+      "notes": "Created intervention-manager.js and skills for ralph-pause, ralph-resume, ralph-rollback"
+    },
+    {
+      "id": "US-016",
+      "epic": "EPIC-01",
+      "title": "Create Spec Creation Pipeline",
+      "description": "Interactive spec creation with complexity-based depth",
+      "acceptanceCriteria": [
+        "Update /prd skill to support spec creation phases",
+        "SIMPLE: Discovery → Quick Spec → Validate",
+        "STANDARD: Discovery → Requirements → Context → Spec → Plan → Validate",
+        "COMPLEX: Add Research and Self-Critique phases",
+        "Each phase uses appropriate agent",
+        "Output validated against spec_contract.json schema"
+      ],
+      "priority": 16,
+      "passes": true,
+      "notes": "Updated /prd skill with SIMPLE/STANDARD/COMPLEX pipelines and auto-detection"
+    },
+    {
+      "id": "US-017",
+      "epic": "EPIC-01",
+      "title": "Update Install Script for New Features",
+      "description": "install-global.js installs all new agents, skills, and configs",
+      "acceptanceCriteria": [
+        "Install new agents: planner, coder, qa-reviewer, qa-fixer",
+        "Install new skills: ralph-plan, ralph-qa, ralph-merge, ralph-memory",
+        "Install new commands: ralph-pause, ralph-resume, ralph-rollback",
+        "Create default .ralph/ structure with config templates",
+        "Update postinstall message with new commands",
+        "Version check for upgrades from v2.x"
+      ],
+      "priority": 17,
+      "passes": true,
+      "notes": "Updated install-global.js with organized command display including all new skills"
+    },
+    {
+      "id": "US-018",
+      "epic": "EPIC-01",
+      "title": "Update Documentation for v3.0",
+      "description": "Comprehensive docs for all new features",
+      "acceptanceCriteria": [
+        "Update README.md with v3.0 features",
+        "Update CLAUDE.md with new architecture",
+        "Update PROJECT_SPEC.md with new modules",
+        "Create MIGRATION.md for v2.x → v3.0 upgrade",
+        "Add examples for multi-agent workflow",
+        "Document all new slash commands"
+      ],
+      "priority": 18,
+      "passes": true,
+      "notes": "Updated CLAUDE.md with v3.0 features, new architecture, and module documentation"
+    }
+  ],
+  "technicalNotes": {
+    "architecture": "Pure slash commands - no Python backend, everything in Claude Code native skills",
+    "agents": "Use .claude/agents/*.md with allowed-tools restrictions",
+    "memory": "JSON-based file storage (not Graphiti DB) for simplicity",
+    "worktrees": "Use git worktree command via Bash tool",
+    "security": "Leverage Claude Code's native permission system + custom boundaries"
+  },
+  "successCriteria": [
+    "All 18 user stories pass acceptance criteria",
+    "Full test suite passes (npm test)",
+    "Global installation works (npx supreme-ralph install)",
+    "Multi-agent pipeline executes end-to-end",
+    "Worktree isolation prevents main branch pollution",
+    "QA loop catches and fixes issues automatically",
+    "Memory persists across sessions",
+    "Complexity detection adapts pipeline appropriately"
+  ]
+}
