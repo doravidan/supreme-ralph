@@ -1,0 +1,51 @@
+{
+  "name": "gsd-ultra",
+  "version": "1.0.0",
+  "description": "GSD Ultra - Get Shit Done with superpowers. Context engineering + worktree isolation + persistent memory + security boundaries.",
+  "bin": {
+    "gsd-ultra": "bin/install.js"
+  },
+  "files": [
+    "bin",
+    "commands",
+    "get-shit-done",
+    "agents",
+    "hooks/dist",
+    "ultra",
+    "scripts"
+  ],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "ai",
+    "gsd",
+    "get-shit-done",
+    "meta-prompting",
+    "context-engineering",
+    "spec-driven-development",
+    "autonomous-development",
+    "worktree",
+    "memory"
+  ],
+  "author": "GSD Ultra Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/doravidan/gsd-ultra.git"
+  },
+  "homepage": "https://github.com/doravidan/gsd-ultra",
+  "bugs": {
+    "url": "https://github.com/doravidan/gsd-ultra/issues"
+  },
+  "engines": {
+    "node": ">=16.7.0"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  },
+  "scripts": {
+    "build:hooks": "node scripts/build-hooks.js",
+    "prepublishOnly": "npm run build:hooks"
+  }
+}
