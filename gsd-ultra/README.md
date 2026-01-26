@@ -202,28 +202,43 @@ Stay current:
 
 ### GitHub Copilot Support
 
-Use the same project configuration with both Claude Code and GitHub Copilot:
+Generate native Copilot configuration alongside GSD Ultra:
 
-```
-/gsd:copilot generate
-→ Creates .github/copilot-instructions.md
-→ Creates .github/instructions/*.instructions.md
-→ Creates .github/prompts/*.prompt.md
-→ Creates .github/agents/*.agent.md
-```
-
-**Or install during setup:**
 ```bash
 npx gsd-ultra --local --copilot
 ```
 
-**Generated files:**
-- **copilot-instructions.md** — Repo-wide instructions from PROJECT_SPEC.md
-- **instructions/** — Path-specific (JavaScript, TypeScript, Python, tests)
-- **prompts/** — Reusable prompts (/review-code, /add-tests, /debug)
-- **agents/** — Custom agents (code-reviewer, test-writer, debugger)
+This creates a complete `.github/` configuration:
 
-**Why?** Same project context works in both Claude Code and GitHub Copilot.
+```
+.github/
+├── copilot-instructions.md           # Repo-wide guidelines
+├── instructions/
+│   ├── javascript.instructions.md    # applyTo: "**/*.js"
+│   ├── typescript.instructions.md    # applyTo: "**/*.ts"
+│   ├── python.instructions.md        # applyTo: "**/*.py"
+│   └── tests.instructions.md         # applyTo: "**/tests/**"
+├── prompts/
+│   ├── review-code.prompt.md         # /review-code in Copilot Chat
+│   ├── add-tests.prompt.md           # /add-tests
+│   ├── explain.prompt.md             # /explain
+│   ├── refactor.prompt.md            # /refactor
+│   └── debug.prompt.md               # /debug
+└── agents/
+    ├── code-reviewer.agent.md        # Code review specialist
+    ├── test-writer.agent.md          # Test generation
+    └── debugger.agent.md             # Debugging specialist
+```
+
+**Usage in Copilot Chat:**
+- Type `/` to see available prompts
+- `/review-code` — Review selected code for issues
+- `/add-tests` — Generate comprehensive tests
+- `/explain` — Explain how code works
+- `/refactor` — Refactor for quality
+- `/debug` — Debug issues systematically
+
+**Why?** Use Copilot for quick tasks, GSD Ultra for complex features. Same project, both tools.
 
 ---
 
