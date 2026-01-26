@@ -11,7 +11,9 @@ allowed-tools:
 ---
 
 <objective>
-Generate GitHub Copilot-compatible configuration files from existing GSD Ultra project setup. Creates parallel instruction files that work with Copilot while maintaining GSD workflow as primary.
+Generate GitHub Copilot-compatible configuration files (.github/) from project analysis.
+This enables the same project context to work with both Claude Code (via GSD commands)
+and GitHub Copilot (via .github/ configuration files).
 </objective>
 
 <execution_context>
@@ -148,13 +150,14 @@ Remove all generated Copilot files.
 
 ## Source Mapping
 
-| GSD Source | Copilot Target |
-|------------|----------------|
+| Project Source | Copilot Target |
+|----------------|----------------|
 | PROJECT_SPEC.md | .github/copilot-instructions.md |
-| CLAUDE.md | .github/copilot-instructions.md (merged) |
-| .claude/rules/*.md | .github/instructions/*.instructions.md |
-| .claude/agents/*.md | .github/agents/*.agent.md |
-| GSD commands | .github/prompts/*.prompt.md |
+| .planning/PROJECT.md | .github/copilot-instructions.md (merged) |
+| package.json | Build commands in copilot-instructions.md |
+| Detected languages | .github/instructions/*.instructions.md |
+| Default templates | .github/prompts/*.prompt.md |
+| Default templates | .github/agents/*.agent.md |
 
 ## copilot-instructions.md Template
 
@@ -162,23 +165,23 @@ Remove all generated Copilot files.
 # Project Guidelines
 
 ## Overview
-[From PROJECT_SPEC.md or CLAUDE.md project description]
+[From PROJECT_SPEC.md or .planning/PROJECT.md]
 
 ## Tech Stack
-[Detected or from PROJECT_SPEC.md]
+[Detected from package.json, requirements.txt, go.mod, etc.]
 - Runtime: [detected]
 - Framework: [detected]
 - Testing: [detected]
 - Linting: [detected]
 
 ## Build Commands
-[From PROJECT_SPEC.md or package.json scripts]
+[From package.json scripts or detected build system]
 - `npm run build` - Build the project
 - `npm test` - Run all tests
 - `npm run lint` - Check code style
 
 ## Code Conventions
-[From .claude/rules/ or PROJECT_SPEC.md]
+[From PROJECT_SPEC.md or detected patterns]
 
 ## Architecture
 [From PROJECT_SPEC.md directory structure]
@@ -187,7 +190,7 @@ Remove all generated Copilot files.
 - `/docs` - Documentation
 
 ## Quality Standards
-[From .planning/security.json or default]
+[Default quality standards]
 ```
 
 ## Path Instructions Template
@@ -281,9 +284,9 @@ Detect languages and generate appropriate instruction files:
    Determine operation: generate, sync, instructions, paths, prompts, agents, status, clean
 
 2. **Analyze project**
-   - Read PROJECT_SPEC.md, CLAUDE.md
-   - Detect languages via glob patterns
-   - Read existing .claude/ configuration
+   - Read PROJECT_SPEC.md, .planning/PROJECT.md, package.json
+   - Detect languages via glob patterns (*.js, *.ts, *.py, etc.)
+   - Analyze existing project structure
    - Check for existing .github/ Copilot files
 
 3. **Generate files**
@@ -310,7 +313,7 @@ Detect languages and generate appropriate instruction files:
 ```
 /gsd:copilot generate
 → Analyzing project...
-→ Found: PROJECT_SPEC.md, CLAUDE.md, 3 rule files
+→ Found: package.json, PROJECT_SPEC.md
 → Detected: TypeScript, React, CSS
 →
 → Created:
@@ -329,7 +332,7 @@ Detect languages and generate appropriate instruction files:
 →   .github/agents/debugger.agent.md
 →
 → Done: 13 files created
-→ Copilot configuration is now parallel to GSD setup
+→ GitHub Copilot configuration ready
 ```
 
 **Sync after changes:**
@@ -337,9 +340,8 @@ Detect languages and generate appropriate instruction files:
 /gsd:copilot sync
 → Comparing configurations...
 → PROJECT_SPEC.md changed → updating copilot-instructions.md
-→ .claude/rules/security.md changed → updating instructions
 →
-→ Updated 2 files, 11 unchanged
+→ Updated 1 file, 12 unchanged
 ```
 
 </examples>

@@ -540,33 +540,36 @@ function installCopilot() {
 
   let installedCount = 0;
 
-  // Copy main instructions template (if it exists)
-  const mainInstructionsSrc = path.join(src, 'copilot-instructions.md.template');
-  if (fs.existsSync(mainInstructionsSrc)) {
-    // For now, copy a basic version - users can run /gsd:copilot to generate from project
-    const basicInstructions = `# Project Guidelines
+  // Create main copilot-instructions.md
+  const basicInstructions = `# Project Guidelines
 
 ## Overview
-This project uses GSD Ultra for development.
-
-## Commands
-Run \`/gsd:help\` in Claude Code to see available commands.
-Run \`/gsd:copilot generate\` to regenerate this file from project analysis.
+This project uses structured development workflows with automated quality gates.
 
 ## Code Conventions
-- Follow consistent code style
+- Follow consistent code style (see path-specific instructions)
 - Write tests for new features
 - Document public APIs
+- Handle errors appropriately
 
 ## Build Commands
-- See package.json scripts
-`;
-    fs.writeFileSync(path.join(targetDir, 'copilot-instructions.md'), basicInstructions);
-    console.log(`  ${green}✓${reset} Created copilot-instructions.md`);
-    installedCount++;
-  }
+- See package.json scripts for available commands
+- Run \`npm test\` for testing
+- Run \`npm run lint\` for code style checking
 
-  // Copy path-specific instructions
+## Quality Standards
+- All code must pass linting before commit
+- All tests must pass before merge
+- Follow existing patterns in the codebase
+
+## Architecture
+See project structure and existing code for patterns and conventions.
+`;
+  fs.writeFileSync(path.join(targetDir, 'copilot-instructions.md'), basicInstructions);
+  console.log(`  ${green}✓${reset} Created copilot-instructions.md`);
+  installedCount++;
+
+  // Copy path-specific instructions (files already named *.instructions.md)
   const instructionsSrc = path.join(src, 'instructions');
   if (fs.existsSync(instructionsSrc)) {
     const instructionsDest = path.join(targetDir, 'instructions');
@@ -575,7 +578,7 @@ Run \`/gsd:copilot generate\` to regenerate this file from project analysis.
       if (file.endsWith('.md')) {
         fs.copyFileSync(
           path.join(instructionsSrc, file),
-          path.join(instructionsDest, file.replace('.md', '.instructions.md'))
+          path.join(instructionsDest, file)
         );
         installedCount++;
       }
@@ -583,7 +586,7 @@ Run \`/gsd:copilot generate\` to regenerate this file from project analysis.
     console.log(`  ${green}✓${reset} Created ${files.length} path-specific instruction files`);
   }
 
-  // Copy prompts
+  // Copy prompts (files already named *.prompt.md)
   const promptsSrc = path.join(src, 'prompts');
   if (fs.existsSync(promptsSrc)) {
     const promptsDest = path.join(targetDir, 'prompts');
@@ -592,7 +595,7 @@ Run \`/gsd:copilot generate\` to regenerate this file from project analysis.
       if (file.endsWith('.md')) {
         fs.copyFileSync(
           path.join(promptsSrc, file),
-          path.join(promptsDest, file.replace('.md', '.prompt.md'))
+          path.join(promptsDest, file)
         );
         installedCount++;
       }
@@ -600,7 +603,7 @@ Run \`/gsd:copilot generate\` to regenerate this file from project analysis.
     console.log(`  ${green}✓${reset} Created ${files.length} prompt templates`);
   }
 
-  // Copy agents
+  // Copy agents (files already named *.agent.md)
   const agentsSrc = path.join(src, 'agents');
   if (fs.existsSync(agentsSrc)) {
     const agentsDest = path.join(targetDir, 'agents');
@@ -609,7 +612,7 @@ Run \`/gsd:copilot generate\` to regenerate this file from project analysis.
       if (file.endsWith('.md')) {
         fs.copyFileSync(
           path.join(agentsSrc, file),
-          path.join(agentsDest, file.replace('.md', '.agent.md'))
+          path.join(agentsDest, file)
         );
         installedCount++;
       }
@@ -621,15 +624,23 @@ Run \`/gsd:copilot generate\` to regenerate this file from project analysis.
   ${green}GitHub Copilot configuration installed!${reset}
 
   ${yellow}Files created:${reset}
-    ${cyan}.github/copilot-instructions.md${reset}     - Main instructions
-    ${cyan}.github/instructions/*.instructions.md${reset} - Path-specific
-    ${cyan}.github/prompts/*.prompt.md${reset}         - Reusable prompts
-    ${cyan}.github/agents/*.agent.md${reset}           - Custom agents
+    ${cyan}.github/copilot-instructions.md${reset}     - Main repo instructions
+    ${cyan}.github/instructions/*.instructions.md${reset} - Path-specific rules
+    ${cyan}.github/prompts/*.prompt.md${reset}         - Reusable prompts (/review-code, /add-tests, etc.)
+    ${cyan}.github/agents/*.agent.md${reset}           - Custom agents (code-reviewer, debugger, etc.)
+
+  ${yellow}Usage in Copilot Chat:${reset}
+    ${dim}Type / to see available prompts${reset}
+    ${cyan}/review-code${reset}  - Review selected code
+    ${cyan}/add-tests${reset}    - Generate tests
+    ${cyan}/explain${reset}      - Explain code
+    ${cyan}/refactor${reset}     - Refactor code
+    ${cyan}/debug${reset}        - Debug issues
 
   ${yellow}Next steps:${reset}
-    1. Run ${cyan}/gsd:copilot generate${reset} to regenerate from project analysis
-    2. Customize instructions as needed
-    3. Commit to version control
+    1. Edit ${cyan}.github/copilot-instructions.md${reset} to describe your project
+    2. Customize path-specific instructions as needed
+    3. Commit .github/ to version control
 
   ${dim}Learn more: https://docs.github.com/copilot/customizing-copilot${reset}
 `);
