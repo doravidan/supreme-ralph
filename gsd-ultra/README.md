@@ -35,6 +35,7 @@ GSD Ultra builds on [Get Shit Done](https://github.com/glittercowboy/get-shit-do
 | **Persistent memory graph** | — | ✓ |
 | **Security boundaries** | — | ✓ |
 | **News aggregation** | — | ✓ |
+| **GitHub Copilot support** | — | ✓ |
 
 **Philosophy:** Same GSD simplicity, more power under the hood.
 
@@ -199,6 +200,33 @@ Stay current:
 
 ---
 
+### GitHub Copilot Support
+
+Use the same project configuration with both Claude Code and GitHub Copilot:
+
+```
+/gsd:copilot generate
+→ Creates .github/copilot-instructions.md
+→ Creates .github/instructions/*.instructions.md
+→ Creates .github/prompts/*.prompt.md
+→ Creates .github/agents/*.agent.md
+```
+
+**Or install during setup:**
+```bash
+npx gsd-ultra --local --copilot
+```
+
+**Generated files:**
+- **copilot-instructions.md** — Repo-wide instructions from PROJECT_SPEC.md
+- **instructions/** — Path-specific (JavaScript, TypeScript, Python, tests)
+- **prompts/** — Reusable prompts (/review-code, /add-tests, /debug)
+- **agents/** — Custom agents (code-reviewer, test-writer, debugger)
+
+**Why?** Same project context works in both Claude Code and GitHub Copilot.
+
+---
+
 ## All Commands
 
 ### Core Workflow
@@ -244,6 +272,7 @@ Stay current:
 | `/gsd:memory [action]` | Persistent knowledge graph |
 | `/gsd:security [action]` | Command allowlists & boundaries |
 | `/gsd:news` | AI/Claude news aggregation |
+| `/gsd:copilot [action]` | GitHub Copilot config generation |
 
 ### Utilities
 | Command | What it does |

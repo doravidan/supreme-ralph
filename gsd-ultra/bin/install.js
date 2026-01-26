@@ -22,6 +22,7 @@ const hasGlobal = args.includes('--global') || args.includes('-g');
 const hasLocal = args.includes('--local') || args.includes('-l');
 const hasUninstall = args.includes('--uninstall') || args.includes('-u');
 const hasHelp = args.includes('--help') || args.includes('-h');
+const hasCopilot = args.includes('--copilot');
 const forceStatusline = args.includes('--force-statusline');
 
 const banner = `
@@ -72,6 +73,7 @@ if (hasHelp) {
     ${cyan}-l, --local${reset}               Install locally (to ./.claude/)
     ${cyan}-u, --uninstall${reset}           Uninstall GSD Ultra
     ${cyan}-c, --config-dir <path>${reset}   Specify custom config directory
+    ${cyan}--copilot${reset}                 Also install GitHub Copilot configs
     ${cyan}-h, --help${reset}                Show this help message
     ${cyan}--force-statusline${reset}        Replace existing statusline config
 
@@ -84,6 +86,9 @@ if (hasHelp) {
 
     ${dim}# Install to current project only${reset}
     npx gsd-ultra --local
+
+    ${dim}# Install with GitHub Copilot support${reset}
+    npx gsd-ultra --local --copilot
 
     ${dim}# Install to custom config directory${reset}
     npx gsd-ultra --global --config-dir ~/.claude-work
@@ -98,6 +103,7 @@ if (hasHelp) {
       ${cyan}/gsd:memory${reset}    - Persistent knowledge graph
       ${cyan}/gsd:security${reset}  - Command allowlists & boundaries
       ${cyan}/gsd:news${reset}      - AI/Claude news aggregation
+      ${cyan}/gsd:copilot${reset}   - GitHub Copilot config generation
 `);
   process.exit(0);
 }
@@ -514,6 +520,122 @@ function install(isGlobal) {
 }
 
 /**
+ * Install GitHub Copilot configuration files
+ */
+function installCopilot() {
+  const src = path.join(__dirname, '..', 'copilot-templates');
+  const targetDir = path.join(process.cwd(), '.github');
+
+  if (!fs.existsSync(src)) {
+    console.log(`  ${yellow}⚠${reset} Copilot templates not found`);
+    return;
+  }
+
+  console.log(`  Installing GitHub Copilot configs to ${cyan}.github/${reset}\n`);
+
+  // Create target directories
+  fs.mkdirSync(path.join(targetDir, 'instructions'), { recursive: true });
+  fs.mkdirSync(path.join(targetDir, 'prompts'), { recursive: true });
+  fs.mkdirSync(path.join(targetDir, 'agents'), { recursive: true });
+
+  let installedCount = 0;
+
+  // Copy main instructions template (if it exists)
+  const mainInstructionsSrc = path.join(src, 'copilot-instructions.md.template');
+  if (fs.existsSync(mainInstructionsSrc)) {
+    // For now, copy a basic version - users can run /gsd:copilot to generate from project
+    const basicInstructions = `# Project Guidelines
+
+## Overview
+This project uses GSD Ultra for development.
+
+## Commands
+Run \`/gsd:help\` in Claude Code to see available commands.
+Run \`/gsd:copilot generate\` to regenerate this file from project analysis.
+
+## Code Conventions
+- Follow consistent code style
+- Write tests for new features
+- Document public APIs
+
+## Build Commands
+- See package.json scripts
+`;
+    fs.writeFileSync(path.join(targetDir, 'copilot-instructions.md'), basicInstructions);
+    console.log(`  ${green}✓${reset} Created copilot-instructions.md`);
+    installedCount++;
+  }
+
+  // Copy path-specific instructions
+  const instructionsSrc = path.join(src, 'instructions');
+  if (fs.existsSync(instructionsSrc)) {
+    const instructionsDest = path.join(targetDir, 'instructions');
+    const files = fs.readdirSync(instructionsSrc);
+    for (const file of files) {
+      if (file.endsWith('.md')) {
+        fs.copyFileSync(
+          path.join(instructionsSrc, file),
+          path.join(instructionsDest, file.replace('.md', '.instructions.md'))
+        );
+        installedCount++;
+      }
+    }
+    console.log(`  ${green}✓${reset} Created ${files.length} path-specific instruction files`);
+  }
+
+  // Copy prompts
+  const promptsSrc = path.join(src, 'prompts');
+  if (fs.existsSync(promptsSrc)) {
+    const promptsDest = path.join(targetDir, 'prompts');
+    const files = fs.readdirSync(promptsSrc);
+    for (const file of files) {
+      if (file.endsWith('.md')) {
+        fs.copyFileSync(
+          path.join(promptsSrc, file),
+          path.join(promptsDest, file.replace('.md', '.prompt.md'))
+        );
+        installedCount++;
+      }
+    }
+    console.log(`  ${green}✓${reset} Created ${files.length} prompt templates`);
+  }
+
+  // Copy agents
+  const agentsSrc = path.join(src, 'agents');
+  if (fs.existsSync(agentsSrc)) {
+    const agentsDest = path.join(targetDir, 'agents');
+    const files = fs.readdirSync(agentsSrc);
+    for (const file of files) {
+      if (file.endsWith('.md')) {
+        fs.copyFileSync(
+          path.join(agentsSrc, file),
+          path.join(agentsDest, file.replace('.md', '.agent.md'))
+        );
+        installedCount++;
+      }
+    }
+    console.log(`  ${green}✓${reset} Created ${files.length} agent definitions`);
+  }
+
+  console.log(`
+  ${green}GitHub Copilot configuration installed!${reset}
+
+  ${yellow}Files created:${reset}
+    ${cyan}.github/copilot-instructions.md${reset}     - Main instructions
+    ${cyan}.github/instructions/*.instructions.md${reset} - Path-specific
+    ${cyan}.github/prompts/*.prompt.md${reset}         - Reusable prompts
+    ${cyan}.github/agents/*.agent.md${reset}           - Custom agents
+
+  ${yellow}Next steps:${reset}
+    1. Run ${cyan}/gsd:copilot generate${reset} to regenerate from project analysis
+    2. Customize instructions as needed
+    3. Commit to version control
+
+  ${dim}Learn more: https://docs.github.com/copilot/customizing-copilot${reset}
+`);
+}
+
+/**
  * Handle statusline configuration
  */
 function handleStatusline(settings, isInteractive, callback) {
@@ -568,7 +690,7 @@ function handleStatusline(settings, isInteractive, callback) {
 /**
  * Finish installation
  */
-function finishInstall(settingsPath, settings, statuslineCommand, shouldInstallStatusline) {
+function finishInstall(settingsPath, settings, statuslineCommand, shouldInstallStatusline, installCopilotFlag) {
   if (shouldInstallStatusline) {
     settings.statusLine = {
       type: 'command',
@@ -578,6 +700,12 @@ function finishInstall(settingsPath, settings, statuslineCommand, shouldInstallS
   }
 
   writeSettings(settingsPath, settings);
+
+  // Install Copilot configs if requested
+  if (installCopilotFlag) {
+    console.log('');
+    installCopilot();
+  }
 
   console.log(`
   ${green}Done!${reset} Launch Claude Code and run ${cyan}/gsd:help${reset}.
@@ -595,6 +723,7 @@ function finishInstall(settingsPath, settings, statuslineCommand, shouldInstallS
     ${cyan}/gsd:memory${reset}          - Persistent knowledge graph
     ${cyan}/gsd:security${reset}        - Command allowlists & boundaries
     ${cyan}/gsd:news${reset}            - AI/Claude news aggregation
+    ${cyan}/gsd:copilot${reset}         - GitHub Copilot config generation
 
   ${dim}Tip: Run Claude Code with --dangerously-skip-permissions for best experience${reset}
 `);
@@ -608,7 +737,7 @@ function promptLocation() {
     console.log(`  ${yellow}Non-interactive terminal, defaulting to global install${reset}\n`);
     const result = install(true);
     handleStatusline(result.settings, false, (shouldInstall) => {
-      finishInstall(result.settingsPath, result.settings, result.statuslineCommand, shouldInstall);
+      finishInstall(result.settingsPath, result.settings, result.statuslineCommand, shouldInstall, hasCopilot);
     });
     return;
   }
@@ -644,7 +773,7 @@ function promptLocation() {
 
     const result = install(isGlobal);
     handleStatusline(result.settings, true, (shouldInstall) => {
-      finishInstall(result.settingsPath, result.settings, result.statuslineCommand, shouldInstall);
+      finishInstall(result.settingsPath, result.settings, result.statuslineCommand, shouldInstall, hasCopilot);
     });
   });
 }
@@ -666,7 +795,7 @@ if (hasGlobal && hasLocal) {
 } else if (hasGlobal || hasLocal) {
   const result = install(hasGlobal);
   handleStatusline(result.settings, false, (shouldInstall) => {
-    finishInstall(result.settingsPath, result.settings, result.statuslineCommand, shouldInstall);
+    finishInstall(result.settingsPath, result.settings, result.statuslineCommand, shouldInstall, hasCopilot);
   });
 } else {
   promptLocation();

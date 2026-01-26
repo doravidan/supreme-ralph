@@ -1,0 +1,64 @@
+# Project Guidelines
+
+{{#if projectDescription}}
+## Overview
+{{projectDescription}}
+{{/if}}
+
+## Tech Stack
+{{#if techStack}}
+{{#each techStack}}
+- {{this}}
+{{/each}}
+{{else}}
+- See package.json for dependencies
+{{/if}}
+
+## Build Commands
+{{#if buildCommands}}
+{{#each buildCommands}}
+- `{{this.command}}` - {{this.description}}
+{{/each}}
+{{else}}
+- `npm install` - Install dependencies
+- `npm run build` - Build the project
+- `npm test` - Run all tests
+- `npm run lint` - Check code style
+{{/if}}
+
+## Code Conventions
+{{#if codeConventions}}
+{{#each codeConventions}}
+- {{this}}
+{{/each}}
+{{else}}
+- Use consistent indentation (2 spaces)
+- Use descriptive variable and function names
+- Handle errors appropriately
+- Write self-documenting code
+{{/if}}
+
+## Architecture
+{{#if architecture}}
+{{architecture}}
+{{else}}
+See project structure for directory layout.
+{{/if}}
+
+## Quality Standards
+- All code must pass linting before commit
+- All tests must pass before merge
+- Follow existing patterns in the codebase
+- Document public APIs and complex logic
+
+{{#if securityNotes}}
+## Security
+{{#each securityNotes}}
+- {{this}}
+{{/each}}
+{{/if}}
+
+{{#if additionalNotes}}
+## Additional Notes
+{{additionalNotes}}
+{{/if}}
